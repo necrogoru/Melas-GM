@@ -1,0 +1,79 @@
+:root {
+  /* Surfaces */
+  --sal-bg-night: #12100e;
+  --sal-surface-base: #1c1815;
+  --sal-surface-elevated: #26211c;
+  --sal-surface-parchment: #f4ebd9;
+  --sal-surface-parchment-alt: #e8dcc4;
+  --sal-surface-overlay: rgba(12, 10, 8, 0.78);
+
+  /* Text */
+  --sal-text-primary: #f5efe6;
+  --sal-text-secondary: #c4b8a5;
+  --sal-text-muted: #8c7f6e;
+  --sal-text-ink: #221b15;
+  --sal-text-ink-muted: #5c4d3c;
+
+  /* Brand & Accents */
+  --sal-accent-primary: #c98a32;
+  --sal-accent-primary-hover: #d89b44;
+  --sal-accent-primary-active: #b07524;
+  --sal-accent-contrast: #1a130b;
+  --sal-accent-soft: rgba(201, 138, 50, 0.18);
+
+  /* Semantic Status */
+  --sal-danger: #9e2a2b;
+  --sal-danger-hover: #b53435;
+  --sal-danger-soft: rgba(158, 42, 43, 0.2);
+  --sal-danger-text: #f3b5b5;
+  --sal-success: #3a6b4c;
+  --sal-success-soft: rgba(58, 107, 76, 0.22);
+  --sal-success-text: #b7dec4;
+  --sal-warning: #b3741e;
+  --sal-warning-soft: rgba(179, 116, 30, 0.22);
+  --sal-warning-text: #f2cf99;
+
+  /* Borders */
+  --sal-border-subtle: #352d25;
+  --sal-border-strong: #524538;
+  --sal-border-parchment: #cbb999;
+  --sal-border-focus: #e0a44b;
+
+  /* Spacing (4px grid) */
+  --sal-space-1: 4px;
+  --sal-space-2: 8px;
+  --sal-space-3: 12px;
+  --sal-space-4: 16px;
+  --sal-space-5: 20px;
+  --sal-space-6: 24px;
+  --sal-space-8: 32px;
+
+  /* Control Heights */
+  --sal-control-sm: 32px;
+  --sal-control-md: 40px;
+  --sal-control-lg: 48px;
+
+  /* Radii */
+  --sal-radius-sm: 4px;
+  --sal-radius-md: 8px;
+  --sal-radius-lg: 12px;
+  --sal-radius-xl: 16px;
+  --sal-radius-full: 9999px;
+
+  /* Typography */
+  --sal-font-size-xs: 0.75rem;
+  --sal-font-size-sm: 0.875rem;
+  --sal-font-size-md: 1rem;
+  --sal-font-size-lg: 1.125rem;
+  --sal-font-size-xl: 1.375rem;
+  --sal-font-weight-normal: 400;
+  --sal-font-weight-medium: 500;
+  --sal-font-weight-semibold: 600;
+  --sal-font-weight-bold: 700;
+
+  /* Elevation & Motion */
+  --sal-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
+  --sal-shadow-modal: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --sal-z-modal: 50;
+  --sal-transition-fast: 150ms ease;
+}
