@@ -9,6 +9,8 @@ export type AudioCueId =
 
 export type AmbientTrackId = 'day' | 'night'
 
+export type SfxId = 'start' | 'dawn' | 'day' | 'night' | 'reveal'
+
 interface AudioCueDefinition {
   src: string
   fallbackText: string
@@ -16,10 +18,19 @@ interface AudioCueDefinition {
 
 export const AMBIENT_BASE_VOLUME = 0.25
 export const AMBIENT_DUCKED_VOLUME = 0.06
+export const SFX_VOLUME = 0.5
 
 export const AMBIENT_TRACKS: Record<AmbientTrackId, string> = {
-  day: '/audio/ambience-day.mp3',
-  night: '/audio/ambience-night.mp3'
+  day: '/audio/music-day.mp3',
+  night: '/audio/music-night.mp3'
+}
+
+export const SFX_TRACKS: Record<SfxId, string> = {
+  start: '/audio/sfx-start.mp3',
+  dawn: '/audio/sfx-dawn.mp3',
+  day: '/audio/sfx-day.mp3',
+  night: '/audio/sfx-night.mp3',
+  reveal: '/audio/sfx-reveal.mp3'
 }
 
 export const AUDIO_CUES: Record<AudioCueId, AudioCueDefinition> = {
@@ -66,6 +77,44 @@ let activeNarrationAudio: HTMLAudioElement | null = null
 let muted = false
 let narrating = false
 let narrationGeneration = 0
+let unlockListenersAttached = false
+
+const UNLOCK_EVENTS = ['pointerdown', 'keydown'] as const
+
+function handleUnlockInteraction(): void {
+  unlockAudio()
+}
+
+function attachUnlockListeners(): void {
+  if (unlockListenersAttached || typeof document === 'undefined') return
+  unlockListenersAttached = true
+  for (const eventName of UNLOCK_EVENTS) {
+    document.addEventListener(eventName, handleUnlockInteraction, { passive: true })
+  }
+}
+
+function detachUnlockListeners(): void {
+  if (!unlockListenersAttached || typeof document === 'undefined') return
+  unlockListenersAttached = false
+  for (const eventName of UNLOCK_EVENTS) {
+    document.removeEventListener(eventName, handleUnlockInteraction)
+  }
+}
+
+function attemptAmbientPlay(audio: HTMLAudioElement): void {
+  void audio.play().then(
+    () => {
+      if (activeAmbientAudio === audio) {
+        detachUnlockListeners()
+      }
+    },
+    () => {
+      if (activeAmbientAudio === audio) {
+        attachUnlockListeners()
+      }
+    }
+  )
+}
 
 export function getAmbientVolume(): number {
   if (muted) return 0
@@ -198,11 +247,28 @@ export function stopNarration(): void {
   syncAmbientVolume()
 }
 
+export function playSfx(id: SfxId): void {
+  if (isMuted() || typeof Audio === 'undefined') return
+
+  const audio = new Audio(SFX_TRACKS[id])
+  audio.volume = SFX_VOLUME
+  void audio.play().catch(() => undefined)
+}
+
+export function unlockAudio(): void {
+  if (!activeAmbientAudio || !activeAmbientAudio.paused || !currentAmbientTrack || muted) {
+    return
+  }
+
+  syncAmbientVolume()
+  attemptAmbientPlay(activeAmbientAudio)
+}
+
 export function playAmbient(track: AmbientTrackId): void {
   if (currentAmbientTrack === track && activeAmbientAudio) {
     syncAmbientVolume()
     if (activeAmbientAudio.paused) {
-      void activeAmbientAudio.play().catch(() => undefined)
+      attemptAmbientPlay(activeAmbientAudio)
     }
     return
   }
@@ -217,10 +283,11 @@ export function playAmbient(track: AmbientTrackId): void {
   currentAmbientTrack = track
   syncAmbientVolume()
 
-  void audio.play().catch(() => undefined)
+  attemptAmbientPlay(audio)
 }
 
 export function stopAmbient(): void {
+  detachUnlockListeners()
   if (activeAmbientAudio) {
     activeAmbientAudio.pause()
     activeAmbientAudio.currentTime = 0
@@ -239,6 +306,9 @@ export function setMuted(nextMuted: boolean): void {
     stopNarration()
   }
   syncAmbientVolume()
+  if (!muted && activeAmbientAudio?.paused) {
+    unlockAudio()
+  }
 }
 
 export function toggleMute(): boolean {

@@ -22,6 +22,7 @@ export interface SalemCharacter {
 
 export type GamePhase =
   | 'lobby'
+  | 'gathering'
   | 'dawn'
   | 'day'
   | 'night-witches'

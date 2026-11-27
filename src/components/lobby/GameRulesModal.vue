@@ -37,6 +37,38 @@ const OFFICIAL_RULES_URL =
           (quien lo recibe empieza la partida). Después, el
           <strong>Alguacil</strong> se marca en secreto.
         </p>
+
+        <table
+          class="rules-guide__table"
+          aria-label="Cantidad oficial de brujas según jugadores">
+          <thead>
+            <tr>
+              <th>Jugadores</th>
+
+              <th>Cartas de Bruja</th>
+
+              <th>Brujas en El Alba</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>4–5</td>
+
+              <td>1</td>
+
+              <td>1</td>
+            </tr>
+
+            <tr>
+              <td>6–12</td>
+
+              <td>2</td>
+
+              <td>1–2</td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="rules-guide__section">
@@ -140,6 +172,34 @@ const OFFICIAL_RULES_URL =
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+}
+
+.rules-guide__table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--sal-space-1);
+  font-size: var(--sal-font-size-xs);
+  color: var(--sal-text-primary);
+  background-color: var(--sal-surface-elevated);
+  border: 1px solid var(--sal-border-subtle);
+  border-radius: var(--sal-radius-sm);
+  overflow: hidden;
+}
+
+.rules-guide__table th,
+.rules-guide__table td {
+  padding: var(--sal-space-2);
+  text-align: left;
+  border-bottom: 1px solid var(--sal-border-subtle);
+}
+
+.rules-guide__table th {
+  color: var(--sal-text-secondary);
+  font-weight: var(--sal-font-weight-semibold);
+}
+
+.rules-guide__table tbody tr:last-child td {
+  border-bottom: none;
 }
 
 .rules-guide__link {

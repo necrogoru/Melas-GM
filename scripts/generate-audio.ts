@@ -50,29 +50,56 @@ const NARRATION_CUES: NarrationCue[] = [
 
 const AMBIENT_CUES: AmbientCue[] = [
   {
-    filename: 'ambience-day.mp3',
+    filename: 'music-day.mp3',
     prompt:
-      '1692 colonial New England village daytime ambience, gentle wind through pine trees, distant wooden cart creaking on dirt road, soft quiet town murmur, subtle atmospheric loop',
+      '1692 colonial New England village daytime background music, warm yet tense acoustic folk drone, subtle wooden lute and low bowed strings, understated atmospheric loop',
     durationSeconds: 22
   },
   {
-    filename: 'ambience-night.mp3',
+    filename: 'music-night.mp3',
     prompt:
-      '1692 Salem colonial village eerie midnight ambience, soft cold night breeze, distant crickets, faint crackling hearth embers, ominous quiet tension, subtle atmospheric loop',
+      '1692 Salem midnight dark ambient background music, eerie low orchestral string drone, subtle brooding tension, sparse haunting colonial atmosphere, loopable',
     durationSeconds: 22
   }
 ]
 
-function loadApiKey(): string {
-  const fromEnv = process.env.ELEVENLABS_API_KEY?.trim()
-  if (fromEnv) return fromEnv
-
-  const envLocalPath = resolve(process.cwd(), '.env.local')
-  if (!existsSync(envLocalPath)) {
-    throw new Error('ELEVENLABS_API_KEY is not set and .env.local was not found.')
+const SFX_CUES: AmbientCue[] = [
+  {
+    filename: 'sfx-start.mp3',
+    prompt:
+      'dramatic colonial wooden door latch and distant church bell chime, mysterious 1692 Salem atmosphere, short transition sting',
+    durationSeconds: 2.0
+  },
+  {
+    filename: 'sfx-dawn.mp3',
+    prompt:
+      'soft eerie dawn wind chime and low bowed string swell, solemn 1692 colonial morning transition',
+    durationSeconds: 2.0
+  },
+  {
+    filename: 'sfx-day.mp3',
+    prompt:
+      'crisp wooden gavel tap with subtle warm acoustic chord, colonial town gathering cue',
+    durationSeconds: 1.5
+  },
+  {
+    filename: 'sfx-night.mp3',
+    prompt:
+      'deep ominous church bell toll fading into cold night wind, 1692 Salem nightfall cue',
+    durationSeconds: 2.0
+  },
+  {
+    filename: 'sfx-reveal.mp3',
+    prompt:
+      'tense dramatic orchestral timpani roll and low brass sting, solemn courtroom reveal',
+    durationSeconds: 2.5
   }
+]
 
-  const raw = readFileSync(envLocalPath, 'utf8')
+function parseApiKeyFromEnvFile(filePath: string): string | null {
+  if (!existsSync(filePath)) return null
+
+  const raw = readFileSync(filePath, 'utf8')
   for (const line of raw.split(/\r?\n/)) {
     const trimmed = line.trim()
     if (!trimmed || trimmed.startsWith('#')) continue
@@ -94,7 +121,19 @@ function loadApiKey(): string {
     if (value) return value
   }
 
-  throw new Error('ELEVENLABS_API_KEY was not found in environment or .env.local.')
+  return null
+}
+
+function loadApiKey(): string {
+  const fromEnv = process.env.ELEVENLABS_API_KEY?.trim()
+  if (fromEnv) return fromEnv
+
+  for (const filename of ['.env.local', '.env']) {
+    const found = parseApiKeyFromEnvFile(resolve(process.cwd(), filename))
+    if (found) return found
+  }
+
+  throw new Error('ELEVENLABS_API_KEY was not found in environment, .env.local, or .env.')
 }
 
 async function generateTts(apiKey: string, voiceId: string, cue: NarrationCue): Promise<Uint8Array> {
@@ -165,14 +204,14 @@ async function main(): Promise<void> {
     writeFileSync(targetPath, bytes)
   }
 
-  for (const cue of AMBIENT_CUES) {
+  for (const cue of [...AMBIENT_CUES, ...SFX_CUES]) {
     const targetPath = resolve(OUTPUT_DIR, cue.filename)
     if (!force && existsSync(targetPath)) {
       console.log(`Skipping existing ${cue.filename}`)
       continue
     }
 
-    console.log(`Generating ambient loop ${cue.filename}...`)
+    console.log(`Generating sound effect ${cue.filename}...`)
     const bytes = await generateSoundEffect(apiKey, cue)
     writeFileSync(targetPath, bytes)
   }

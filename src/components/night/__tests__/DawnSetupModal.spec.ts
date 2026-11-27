@@ -18,9 +18,22 @@ vi.mock('@/services/audioService', () => ({
   playAmbient: audioMocks.playAmbient
 }))
 
-function setupDawnGame() {
+function setupDawnGame(playerCount = 4) {
   const store = useGameStore()
-  const names = ['Ana', 'Beto', 'Clara', 'Diego']
+  const names = [
+    'Ana',
+    'Beto',
+    'Clara',
+    'Diego',
+    'Elena',
+    'Fran',
+    'Gael',
+    'Hugo',
+    'Inés',
+    'Juan',
+    'Klara',
+    'Luis'
+  ].slice(0, playerCount)
   names.forEach((name, index) => {
     const character = SALEM_CHARACTERS[index]
     if (!character) throw new Error(`Missing character at index ${String(index)}`)
@@ -29,11 +42,13 @@ function setupDawnGame() {
   })
   const startResult = store.startGame()
   expect(startResult.ok).toBe(true)
+  expect(store.startDawn().ok).toBe(true)
   return store
 }
 
 describe('DawnSetupModal', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })
@@ -64,9 +79,9 @@ describe('DawnSetupModal', () => {
   })
 
   it('marks witches and Black Cat, hides witch identities on Accept, then marks Constable secretly', async () => {
-    const store = setupDawnGame()
+    const store = setupDawnGame(6)
     const [ana, beto, clara, diego] = store.players
-    if (!ana || !beto || !clara || !diego) throw new Error('Expected 4 players')
+    if (!ana || !beto || !clara || !diego) throw new Error('Expected 6 players')
 
     const wrapper = mount(DawnSetupModal)
     await nextTick()
@@ -88,7 +103,7 @@ describe('DawnSetupModal', () => {
     expect(wrapper.find('[data-testid="witch-option-0"]').exists()).toBe(false)
     expect(wrapper.find('[data-testid="dawn-witches-accept"]').exists()).toBe(false)
     const constableButtons = wrapper.findAll('[data-testid^="constable-option-"]')
-    expect(constableButtons).toHaveLength(4)
+    expect(constableButtons).toHaveLength(6)
     constableButtons.forEach((button) => {
       expect(button.attributes('aria-pressed')).toBe('false')
     })
@@ -108,5 +123,44 @@ describe('DawnSetupModal', () => {
     expect(audioMocks.stopNarration).toHaveBeenCalled()
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     expect(wrapper.html()).not.toContain('Diego')
+  })
+
+  it('disables extra witch toggles at max 1 for 4-5 players and shows limit hint', async () => {
+    setupDawnGame(4)
+    const wrapper = mount(DawnSetupModal)
+    await nextTick()
+
+    expect(wrapper.get('[data-testid="witch-limit-hint"]').text()).toContain('1 bruja')
+
+    const opt0 = wrapper.get('[data-testid="witch-option-0"]')
+    const opt1 = wrapper.get('[data-testid="witch-option-1"]')
+    await opt0.trigger('click')
+
+    expect(opt0.attributes('disabled')).toBeUndefined()
+    expect(opt1.attributes('disabled')).toBeDefined()
+
+    // Deselecting re-enables other options
+    await opt0.trigger('click')
+    expect(opt1.attributes('disabled')).toBeUndefined()
+  })
+
+  it('disables extra witch toggles at max 2 for 6-12 players and shows limit hint', async () => {
+    setupDawnGame(6)
+    const wrapper = mount(DawnSetupModal)
+    await nextTick()
+
+    expect(wrapper.get('[data-testid="witch-limit-hint"]').text()).toContain('1 y 2 brujas')
+
+    const opt0 = wrapper.get('[data-testid="witch-option-0"]')
+    const opt1 = wrapper.get('[data-testid="witch-option-1"]')
+    const opt2 = wrapper.get('[data-testid="witch-option-2"]')
+
+    await opt0.trigger('click')
+    expect(opt2.attributes('disabled')).toBeUndefined()
+
+    await opt1.trigger('click')
+    expect(opt0.attributes('disabled')).toBeUndefined()
+    expect(opt1.attributes('disabled')).toBeUndefined()
+    expect(opt2.attributes('disabled')).toBeDefined()
   })
 })

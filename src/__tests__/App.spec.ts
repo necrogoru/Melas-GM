@@ -11,6 +11,7 @@ const audioMocks = vi.hoisted(() => ({
   stopNarration: vi.fn<() => void>(),
   playAmbient: vi.fn<() => void>(),
   stopAmbient: vi.fn<() => void>(),
+  playSfx: vi.fn<() => void>(),
   isMuted: vi.fn<() => boolean>(() => false),
   toggleMute: vi.fn<() => boolean>(() => true)
 }))
@@ -27,6 +28,7 @@ vi.mock('@/services/audioService', () => ({
   stopNarration: audioMocks.stopNarration,
   playAmbient: audioMocks.playAmbient,
   stopAmbient: audioMocks.stopAmbient,
+  playSfx: audioMocks.playSfx,
   isMuted: audioMocks.isMuted,
   toggleMute: audioMocks.toggleMute
 }))
@@ -56,6 +58,7 @@ async function registerPlayer(
 
 describe('App', () => {
   beforeEach(() => {
+    localStorage.clear()
     const pinia = createPinia()
     setActivePinia(pinia)
     vi.clearAllMocks()
@@ -82,6 +85,7 @@ describe('App', () => {
     expect(wrapper.find('[aria-label="Aldea de Salem 1692"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="wake-lock-indicator"]').exists()).toBe(true)
     expect(wrapper.find('[data-testid="mute-toggle"]').exists()).toBe(true)
+    expect(audioMocks.playAmbient).toHaveBeenCalledWith('day')
 
     // Toggle mute
     await wrapper.get('[data-testid="mute-toggle"]').trigger('click')
@@ -98,9 +102,31 @@ describe('App', () => {
     await wrapper.get('[data-testid="play-button"]').trigger('click')
     await nextTick()
 
-    expect(store.phase).toBe('dawn')
+    expect(store.phase).toBe('gathering')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('start')
     expect(wakeLockMocks.requestWakeLock).toHaveBeenCalled()
     expect(wrapper.get('[data-testid="wake-lock-indicator"]').text()).toContain('Pantalla activa')
+    expect(wrapper.find('[data-testid="game-start-transition"]').exists()).toBe(true)
+    expect(wrapper.find('[data-testid="dawn-witches-accept"]').exists()).toBe(false)
+
+    // Skip transition overlay by clicking it
+    await wrapper.get('[data-testid="game-start-transition"]').trigger('click')
+    await nextTick()
+    expect(wrapper.find('[data-testid="game-start-transition"]').exists()).toBe(false)
+
+    // Gathering roster and Iniciar El Alba button
+    const gatheringCard = wrapper.get('[data-testid="gathering-card"]')
+    expect(gatheringCard.text()).toContain('Ana')
+    expect(gatheringCard.text()).toContain('Beto')
+    expect(gatheringCard.text()).toContain('Clara')
+    expect(gatheringCard.text()).toContain('Diego')
+
+    await wrapper.get('[data-testid="start-dawn-button"]').trigger('click')
+    await nextTick()
+
+    expect(store.phase).toBe('dawn')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('dawn')
+    expect(audioMocks.playAmbient).toHaveBeenCalledWith('night')
 
     // Dawn step 1: Witches (Ana = 0) + Black Cat (Clara = 2)
     await wrapper.get('[data-testid="witch-option-0"]').trigger('click')
@@ -116,6 +142,8 @@ describe('App', () => {
     await nextTick()
 
     expect(store.phase).toBe('day')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('day')
+    expect(audioMocks.playAmbient).toHaveBeenCalledWith('day')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
     // Public Black Cat badge is shown on Clara, but Witch/Constable roles are never shown
     expect(wrapper.text()).toContain('Gato Negro')
@@ -126,6 +154,8 @@ describe('App', () => {
     await wrapper.get('[data-testid="start-night-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('night-witches')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('night')
+    expect(audioMocks.playAmbient).toHaveBeenCalledWith('night')
 
     await wrapper.get('[data-testid="night-target-option-3"]').trigger('click')
     await wrapper.get('[data-testid="night-witches-accept"]').trigger('click')
@@ -140,6 +170,7 @@ describe('App', () => {
     await wrapper.get('[data-testid="night-reveal-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('reveal')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('reveal')
     expect(wrapper.text()).toContain('Diego')
 
     await wrapper.get('[data-testid="reveal-continue-button"]').trigger('click')
@@ -182,6 +213,8 @@ describe('App', () => {
     await registerPlayer(wrapper, 'Clara', 2)
     await registerPlayer(wrapper, 'Diego', 3)
     await wrapper.get('[data-testid="play-button"]').trigger('click')
+    await nextTick()
+    await wrapper.get('[data-testid="start-dawn-button"]').trigger('click')
     await nextTick()
 
     await wrapper.get('[data-testid="witch-option-0"]').trigger('click')

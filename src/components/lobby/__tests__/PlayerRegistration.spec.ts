@@ -30,6 +30,7 @@ async function registerPlayer(
 
 describe('PlayerRegistration', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
   })
 
@@ -85,7 +86,7 @@ describe('PlayerRegistration', () => {
     expect(playButton().attributes('disabled')).toBeUndefined()
 
     await playButton().trigger('click')
-    expect(store.phase).toBe('dawn')
+    expect(store.phase).toBe('gathering')
   })
 
   it('allows removing a player and frees their character', async () => {

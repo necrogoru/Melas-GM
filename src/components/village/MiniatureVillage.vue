@@ -13,6 +13,7 @@ type SkyMood = 'twilight' | 'dawn' | 'day' | 'night'
 
 const PHASE_SKY_MAP: Record<GamePhase, SkyMood> = {
   lobby: 'twilight',
+  gathering: 'twilight',
   dawn: 'dawn',
   day: 'day',
   'night-witches': 'night',

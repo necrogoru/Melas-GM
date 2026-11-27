@@ -15,6 +15,12 @@ Referencia oficial: [Salem 1692 Game Rules (Ultra BoardGames)](https://www.ultra
    - Las Brujas abren los ojos, se reconocen en silencio y entregan la carta del **Gato Negro** (*Black Cat*) a cualquier jugador (puede ser a una de ellas para despistar).
    - El Alguacil abre los ojos y queda registrado en secreto.
 
+### Cartas de Bruja según jugadores
+| Jugadores | Cartas de Bruja (*Tryal*) | Brujas en El Alba |
+| --- | --- | --- |
+| 4–5 | 1 | 1 |
+| 6–12 | 2 | 1–2 (si un jugador recibe ambas cartas, solo hay 1 bruja) |
+
 ## El Día y las 5 Leyes de Salem
 En tu turno debes hacer **una** de dos acciones:
 - **Robar 2 cartas** (si sale una carta Negra, se revela y resuelve de inmediato).
