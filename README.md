@@ -1,54 +1,43 @@
-# seed
+# Salem 1692 · Game Master
 
-This template should help get you started developing with Vue 3 in Vite.
+A mobile-first, gamified **Game Master** web application for running tabletop **Salem 1692** sessions from a single phone placed in the center of the table.
 
-## Recommended IDE Setup
+## Features
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+- **Player Registration & Character Cards:** Register 4–12 players with unique portraits inspired by the 12 classic Salem 1692 Town Hall character cards.
+- **Animated Miniature Village:** Twilight, dawn, day, and night atmosphere with animated character sprites, public Black Cat badge, and eliminated/ghost states.
+- **Secret Dawn & Night Flows:**
+  - **Dawn (El Alba):** Witches secretly mark themselves and assign the **Black Cat**, then the **Constable** secretly marks themselves. Both roles remain hidden throughout the game.
+  - **Night (La Noche):** Guided by Spanish Town Crier narration, Witches select their target and hide it, then the Constable places the **Gavel** to protect any alive player except themselves, followed by a **Reveal** resolution.
+- **ElevenLabs Voice & 1692 Ambience:** Pre-generated Spanish Town Crier cues and looping colonial day/night ambient audio (`public/audio/*.mp3`) with automatic volume ducking and `speechSynthesis` fallback.
+- **Screen Wake Lock:** Keeps the phone screen awake during active gameplay so the table never loses the flow.
+- **In-Game Rules Guide:** Quick-access info modal summarizing the [official Salem 1692 rules](docs/salem-1692-rules.md).
+- **Sal UI (`src/components/sal-ui/`):** Reusable design system primitives built with Vue 3 `<script setup lang="ts">` and `defineModel`.
 
-## Recommended Browser Setup
-
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Commands
 
 ```sh
-bun install
-```
+# Install dependencies
+bun install --frozen-lockfile
 
-### Compile and Hot-Reload for Development
+# Start dev server (use --host to test from a phone on the same Wi-Fi)
+bun dev --host
 
-```sh
-bun dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
+# Type-check, lint, test, and build
+bun run type-check
+bun lint
+bun test:unit --run
 bun run build
 ```
 
-### Run Unit Tests with [Vitest](https://vitest.dev/)
+### Regenerate ElevenLabs Audio
+
+Set `ELEVENLABS_API_KEY` in `.env` or `.env.local` (never commit keys) and run:
 
 ```sh
-bun test:unit
+bun scripts/generate-audio.ts
 ```
 
-### Lint with [ESLint](https://eslint.org/)
+## Documentation
 
-```sh
-bun lint
-```
+- [Salem 1692 Rules Summary (ES)](docs/salem-1692-rules.md)
