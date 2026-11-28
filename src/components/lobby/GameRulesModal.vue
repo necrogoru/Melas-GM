@@ -154,40 +154,47 @@ const OFFICIAL_RULES_URL =
 .rules-guide__section {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--sal-space-2);
+  padding: var(--sal-space-3);
+  background-color: var(--sal-surface-panel);
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  box-shadow: var(--sal-shadow-bevel);
 }
 
 .rules-guide__heading {
   margin: 0;
-  font-size: 0.92rem;
-  font-weight: 700;
-  color: var(--sal-accent);
+  font-family: var(--sal-font-display);
+  font-size: var(--sal-font-size-sm);
+  font-weight: var(--sal-font-weight-bold);
+  color: var(--sal-accent-primary-hover);
 }
 
 .rules-guide__text,
 .rules-guide__list {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: var(--sal-font-size-sm);
   line-height: 1.45;
-  color: var(--sal-text);
+  color: var(--sal-text-primary);
 }
 
 .rules-guide__list {
-  padding-left: 1.1rem;
+  padding-left: var(--sal-space-4);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--sal-space-1);
 }
 
 .rules-guide__table {
   width: 100%;
   border-collapse: collapse;
   margin-top: var(--sal-space-1);
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
   color: var(--sal-text-primary);
-  background-color: var(--sal-surface-elevated);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-inset);
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-pixel);
   overflow: hidden;
 }
 
@@ -195,12 +202,15 @@ const OFFICIAL_RULES_URL =
 .rules-guide__table td {
   padding: var(--sal-space-2);
   text-align: left;
-  border-bottom: 1px solid var(--sal-border-subtle);
+  border-bottom: var(--sal-border-width-thin) solid var(--sal-border-subtle);
 }
 
 .rules-guide__table th {
+  background-color: var(--sal-surface-header);
   color: var(--sal-text-secondary);
-  font-weight: var(--sal-font-weight-semibold);
+  font-weight: var(--sal-font-weight-bold);
+  letter-spacing: var(--sal-tracking-hud);
+  text-transform: uppercase;
 }
 
 .rules-guide__table tbody tr:last-child td {
@@ -210,12 +220,18 @@ const OFFICIAL_RULES_URL =
 .rules-guide__link {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--sal-space-1);
   margin-top: var(--sal-space-1);
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--sal-accent);
+  font-family: var(--sal-font-mono);
+  font-size: var(--sal-font-size-xs);
+  font-weight: var(--sal-font-weight-semibold);
+  color: var(--sal-accent-primary-hover);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.rules-guide__link:focus-visible {
+  outline: var(--sal-focus-ring);
+  outline-offset: var(--sal-focus-offset);
 }
 </style>

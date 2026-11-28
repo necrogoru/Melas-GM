@@ -214,7 +214,8 @@ function handleStartGame(): void {
 
 .player-registration__title {
   margin: 0;
-  font-size: var(--sal-font-size-xl);
+  font-family: var(--sal-font-display);
+  font-size: var(--sal-font-size-lg);
   font-weight: var(--sal-font-weight-bold);
 }
 
@@ -222,6 +223,7 @@ function handleStartGame(): void {
   margin: 0 0 var(--sal-space-3);
   font-size: var(--sal-font-size-sm);
   color: var(--sal-text-secondary);
+  line-height: 1.45;
 }
 
 .player-registration__form {
@@ -248,21 +250,23 @@ function handleStartGame(): void {
   align-items: center;
   gap: var(--sal-space-3);
   padding: var(--sal-space-2) var(--sal-space-3);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-md);
-  background-color: var(--sal-surface-base);
+  border: var(--sal-border-width-thin) solid var(--sal-accent-primary);
+  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-inset);
+  box-shadow: var(--sal-shadow-pixel-inset);
 }
 
 .player-registration__preview-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sal-space-1);
   font-size: var(--sal-font-size-sm);
 }
 
 .player-registration__preview-text span {
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
-  color: var(--sal-text-secondary);
+  color: var(--sal-accent-primary-hover);
 }
 
 .player-registration__list {
@@ -280,9 +284,10 @@ function handleStartGame(): void {
   justify-content: space-between;
   gap: var(--sal-space-3);
   padding: var(--sal-space-2) var(--sal-space-3);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-md);
-  background-color: var(--sal-surface-base);
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-panel);
+  box-shadow: var(--sal-shadow-bevel);
 }
 
 .player-registration__player {
@@ -295,7 +300,7 @@ function handleStartGame(): void {
 .player-registration__player-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sal-space-1);
   min-width: 0;
 }
 
@@ -309,13 +314,19 @@ function handleStartGame(): void {
 }
 
 .player-registration__player-character {
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
   color: var(--sal-text-secondary);
 }
 
 .player-registration__empty {
   margin: var(--sal-space-4) 0 0;
-  font-size: var(--sal-font-size-sm);
+  padding: var(--sal-space-4) var(--sal-space-3);
+  border: var(--sal-border-width-thin) dashed var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-inset);
+  font-family: var(--sal-font-mono);
+  font-size: var(--sal-font-size-xs);
   color: var(--sal-text-muted);
   text-align: center;
 }
