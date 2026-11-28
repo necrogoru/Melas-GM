@@ -1,15 +1,20 @@
+import { existsSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AMBIENT_BASE_VOLUME,
   AMBIENT_DUCKED_VOLUME,
+  SFX_VOLUME,
   getAmbientVolume,
   isMuted,
   playAmbient,
   playCue,
+  playSfx,
   setMuted,
   stopAmbient,
   stopNarration,
-  toggleMute
+  toggleMute,
+  unlockAudio
 } from '@/services/audioService'
 import {
   isWakeLockActive,
@@ -124,7 +129,7 @@ describe('audioService', () => {
     playAmbient('day')
     expect(MockAudio.instances).toHaveLength(1)
     const dayAudio = MockAudio.instances[0]
-    expect(dayAudio?.src).toBe('/audio/ambience-day.mp3')
+    expect(dayAudio?.src).toBe('/audio/music-day.mp3')
     expect(dayAudio?.loop).toBe(true)
     expect(dayAudio?.volume).toBe(AMBIENT_BASE_VOLUME)
     expect(dayAudio?.paused).toBe(false)
@@ -133,7 +138,7 @@ describe('audioService', () => {
     expect(dayAudio?.paused).toBe(true)
     expect(MockAudio.instances).toHaveLength(2)
     const nightAudio = MockAudio.instances[1]
-    expect(nightAudio?.src).toBe('/audio/ambience-night.mp3')
+    expect(nightAudio?.src).toBe('/audio/music-night.mp3')
     expect(nightAudio?.loop).toBe(true)
 
     stopAmbient()
@@ -213,6 +218,73 @@ describe('audioService', () => {
 
     expect(toggleMute()).toBe(false)
     expect(ambientAudio?.volume).toBe(AMBIENT_BASE_VOLUME)
+  })
+
+  it('plays stage SFX and skips SFX when muted', () => {
+    playSfx('start')
+    playSfx('dawn')
+    playSfx('day')
+    playSfx('night')
+    playSfx('reveal')
+
+    expect(MockAudio.instances.map((instance) => instance.src)).toEqual([
+      '/audio/sfx-start.mp3',
+      '/audio/sfx-dawn.mp3',
+      '/audio/sfx-day.mp3',
+      '/audio/sfx-night.mp3',
+      '/audio/sfx-reveal.mp3'
+    ])
+    for (const instance of MockAudio.instances) {
+      expect(instance.volume).toBe(SFX_VOLUME)
+      expect(instance.paused).toBe(false)
+    }
+
+    setMuted(true)
+    playSfx('reveal')
+    expect(MockAudio.instances).toHaveLength(5)
+  })
+
+  it('retries autoplay-blocked ambient playback on unlockAudio and user interaction', async () => {
+    MockAudio.shouldFailPlay = true
+    playAmbient('day')
+    const dayAudio = MockAudio.instances[0]
+    expect(dayAudio?.paused).toBe(true)
+
+    await Promise.resolve()
+    MockAudio.shouldFailPlay = false
+
+    unlockAudio()
+    await Promise.resolve()
+    expect(dayAudio?.paused).toBe(false)
+
+    stopAmbient()
+    MockAudio.shouldFailPlay = true
+    playAmbient('night')
+    const nightAudio = MockAudio.instances[1]
+    expect(nightAudio?.paused).toBe(true)
+
+    await Promise.resolve()
+    MockAudio.shouldFailPlay = false
+    document.dispatchEvent(new Event('pointerdown'))
+    await Promise.resolve()
+    expect(nightAudio?.paused).toBe(false)
+  })
+
+  it('has generated ambient music and stage SFX MP3 files in public/audio', () => {
+    const audioDir = resolve(process.cwd(), 'public/audio')
+    const expectedFiles = [
+      'music-day.mp3',
+      'music-night.mp3',
+      'sfx-start.mp3',
+      'sfx-dawn.mp3',
+      'sfx-day.mp3',
+      'sfx-night.mp3',
+      'sfx-reveal.mp3'
+    ]
+
+    for (const file of expectedFiles) {
+      expect(existsSync(resolve(audioDir, file)), `${file} should exist in public/audio`).toBe(true)
+    }
   })
 })
 

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { SALEM_CHARACTERS } from '@/data/characters'
-import { useGameStore } from '@/stores/gameStore'
+import { getWitchLimits, STORAGE_KEY, useGameStore } from '@/stores/gameStore'
 
 function charIdAt(index: number) {
   const character = SALEM_CHARACTERS[index]
@@ -28,6 +28,7 @@ function setupActiveGame(count = 4) {
   const [p1, p2, p3, p4] = ids
   if (!p1 || !p2 || !p3 || !p4) throw new Error('Expected at least 4 players')
   store.startGame()
+  store.startDawn()
   return { store, p1, p2, p3, p4 }
 }
 
@@ -41,6 +42,7 @@ describe('SALEM_CHARACTERS', () => {
 
 describe('useGameStore', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
   })
 
@@ -71,6 +73,8 @@ describe('useGameStore', () => {
       expect(store.addPlayer('Player 4', charIdAt(3)).ok).toBe(true)
       expect(store.canStartGame).toBe(true)
       expect(store.startGame().ok).toBe(true)
+      expect(store.phase).toBe('gathering')
+      expect(store.startDawn().ok).toBe(true)
       expect(store.phase).toBe('dawn')
       expect(store.dawnStep).toBe('witches')
     })
@@ -123,6 +127,42 @@ describe('useGameStore', () => {
 
       expect(store.confirmDawnConstable('non-existent').ok).toBe(false)
       expect(store.phase).toBe('dawn')
+    })
+
+    it('returns official witch limits by player count', () => {
+      expect(getWitchLimits(4)).toEqual({ min: 1, max: 1 })
+      expect(getWitchLimits(5)).toEqual({ min: 1, max: 1 })
+      expect(getWitchLimits(6)).toEqual({ min: 1, max: 2 })
+      expect(getWitchLimits(12)).toEqual({ min: 1, max: 2 })
+    })
+
+    it('enforces max 1 witch for 4-5 players in confirmDawnWitches', () => {
+      const { store, p1, p2, p3 } = setupActiveGame(4)
+      const tooMany = store.confirmDawnWitches([p1, p2], p3)
+      expect(tooMany.ok).toBe(false)
+      expect(store.dawnStep).toBe('witches')
+
+      const valid = store.confirmDawnWitches([p1], p3)
+      expect(valid.ok).toBe(true)
+      expect(store.dawnStep).toBe('constable')
+    })
+
+    it('enforces 1-2 witches for 6-12 players in confirmDawnWitches', () => {
+      const store = useGameStore()
+      const ids = registerPlayers(6)
+      store.startGame()
+      store.startDawn()
+
+      const [p1, p2, p3, p4] = ids
+      if (!p1 || !p2 || !p3 || !p4) throw new Error('Expected 6 players')
+
+      const tooMany = store.confirmDawnWitches([p1, p2, p3], p4)
+      expect(tooMany.ok).toBe(false)
+      expect(store.dawnStep).toBe('witches')
+
+      const validTwo = store.confirmDawnWitches([p1, p2], p4)
+      expect(validTwo.ok).toBe(true)
+      expect(store.dawnStep).toBe('constable')
     })
   })
 
@@ -215,6 +255,63 @@ describe('useGameStore', () => {
       store.eliminatePlayer(p1)
       expect(store.phase).toBe('ended')
       expect(store.winner).toBe('town')
+    })
+  })
+
+  describe('localStorage persistence', () => {
+    it('persists state to localStorage and restores it on store re-instantiation', () => {
+      const { store, p1, p2, p3, p4 } = setupActiveGame()
+      store.confirmDawnWitches([p1], p3)
+      store.confirmDawnConstable(p2)
+      store.startNight()
+      store.confirmWitchTarget(p4)
+      store.confirmConstableProtection(p3)
+
+      expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+
+      setActivePinia(createPinia())
+      const restored = useGameStore()
+
+      expect(restored.phase).toBe('night-ready-reveal')
+      expect(restored.nightNumber).toBe(1)
+      expect(restored.players).toHaveLength(4)
+      expect(restored.blackCatHolderId).toBe(p3)
+      expect(restored.isWitch(p1)).toBe(true)
+      expect(restored.isConstable(p2)).toBe(true)
+
+      const reveal = restored.revealNightOutcome()
+      expect(reveal.ok).toBe(true)
+      expect(restored.lastResolution?.killedPlayerId).toBe(p4)
+    })
+
+    it('falls back safely when localStorage contains corrupt JSON or invalid shape', () => {
+      localStorage.setItem(STORAGE_KEY, '{corrupt json')
+      setActivePinia(createPinia())
+      const fromCorrupt = useGameStore()
+      expect(fromCorrupt.phase).toBe('lobby')
+      expect(fromCorrupt.players).toEqual([])
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ phase: 'unknown-phase', players: 'not-an-array' })
+      )
+      setActivePinia(createPinia())
+      const fromInvalid = useGameStore()
+      expect(fromInvalid.phase).toBe('lobby')
+      expect(fromInvalid.players).toEqual([])
+    })
+
+    it('clears persisted state on resetGame', () => {
+      const { store } = setupActiveGame()
+      expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
+
+      store.resetGame()
+      expect(localStorage.getItem(STORAGE_KEY)).toBeNull()
+
+      setActivePinia(createPinia())
+      const fresh = useGameStore()
+      expect(fresh.phase).toBe('lobby')
+      expect(fresh.players).toEqual([])
     })
   })
 })

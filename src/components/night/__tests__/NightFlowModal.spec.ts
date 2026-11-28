@@ -29,6 +29,7 @@ function setupDayGame() {
     expect(result.ok).toBe(true)
   })
   expect(store.startGame().ok).toBe(true)
+  expect(store.startDawn().ok).toBe(true)
 
   const [ana, beto, clara, diego] = store.players
   if (!ana || !beto || !clara || !diego) throw new Error('Expected 4 players')
@@ -40,6 +41,7 @@ function setupDayGame() {
 
 describe('NightFlowModal and RevealModal', () => {
   beforeEach(() => {
+    localStorage.clear()
     setActivePinia(createPinia())
     vi.clearAllMocks()
   })

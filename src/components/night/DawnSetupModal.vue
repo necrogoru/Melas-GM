@@ -5,6 +5,7 @@ import SalButton from '@/components/sal-ui/SalButton.vue'
 import SalCard from '@/components/sal-ui/SalCard.vue'
 import SalModal from '@/components/sal-ui/SalModal.vue'
 import { useNightFlow } from '@/composables/game/useNightFlow'
+import { getWitchLimits } from '@/stores/gameStore'
 
 const {
   isDawnOpen,
@@ -25,6 +26,19 @@ const modalTitle = computed(() =>
   dawnStep.value === 'witches' ? 'El Alba · Brujas' : 'El Alba · Alguacil'
 )
 
+const witchLimits = computed(() => getWitchLimits(alivePlayers.value.length))
+const isWitchLimitReached = computed(
+  () => selectedWitchIds.value.length >= witchLimits.value.max
+)
+const witchLimitHint = computed(() => {
+  const { min, max } = witchLimits.value
+  const count = alivePlayers.value.length
+  if (max === 1) {
+    return `Con ${String(count)} jugadores: exactamente 1 bruja.`
+  }
+  return `Con ${String(count)} jugadores: entre ${String(min)} y ${String(max)} brujas.`
+})
+
 function isWitchSelected(playerId: string): boolean {
   return selectedWitchIds.value.includes(playerId)
 }
@@ -35,6 +49,7 @@ function toggleWitch(playerId: string): void {
     selectedWitchIds.value = selectedWitchIds.value.filter((id) => id !== playerId)
     return
   }
+  if (isWitchLimitReached.value) return
   selectedWitchIds.value = [...selectedWitchIds.value, playerId]
 }
 
@@ -111,6 +126,12 @@ function handleConstableSubmit(): void {
             1. ¿Quiénes son las Brujas?
           </h3>
 
+          <p
+            class="dawn-setup__hint"
+            data-testid="witch-limit-hint">
+            {{ witchLimitHint }}
+          </p>
+
           <ul class="dawn-setup__list">
             <li
               v-for="(player, index) in alivePlayers"
@@ -120,6 +141,7 @@ function handleConstableSubmit(): void {
                 :variant="isWitchSelected(player.id) ? 'primary' : 'secondary'"
                 size="md"
                 block
+                :disabled="!isWitchSelected(player.id) && isWitchLimitReached"
                 :aria-pressed="isWitchSelected(player.id)"
                 :data-testid="`witch-option-${index}`"
                 @click="toggleWitch(player.id)">
@@ -250,6 +272,12 @@ function handleConstableSubmit(): void {
   font-size: var(--sal-font-size-sm);
   font-weight: var(--sal-font-weight-semibold);
   color: var(--sal-text-primary);
+}
+
+.dawn-setup__hint {
+  margin: 0;
+  font-size: var(--sal-font-size-xs);
+  color: var(--sal-text-secondary);
 }
 
 .dawn-setup__list {

@@ -9,13 +9,19 @@ import SalBadge from '@/components/sal-ui/SalBadge.vue'
 import SalButton from '@/components/sal-ui/SalButton.vue'
 import SalCard from '@/components/sal-ui/SalCard.vue'
 import SalModal from '@/components/sal-ui/SalModal.vue'
+import GameStartTransition from '@/components/village/GameStartTransition.vue'
 import MiniatureVillage from '@/components/village/MiniatureVillage.vue'
+import VillagerSprite from '@/components/village/VillagerSprite.vue'
+import { SALEM_CHARACTERS } from '@/data/characters'
 import {
   isMuted,
   playAmbient,
+  playSfx,
   stopAmbient,
   stopNarration,
-  toggleMute
+  toggleMute,
+  type AmbientTrackId,
+  type SfxId
 } from '@/services/audioService'
 import {
   isWakeLockActive,
@@ -24,7 +30,7 @@ import {
   requestWakeLock
 } from '@/services/wakeLockService'
 import { useGameStore } from '@/stores/gameStore'
-import type { GamePhase } from '@/types/game'
+import type { CharacterId, GamePhase } from '@/types/game'
 
 const store = useGameStore()
 
@@ -37,6 +43,7 @@ const accuseError = ref<string | null>(null)
 
 const isConstableModalOpen = ref(false)
 const isRulesOpen = ref(false)
+const isStartTransitionOpen = ref(false)
 const selectedNewConstableId = ref<string | null>(null)
 const constableError = ref<string | null>(null)
 
@@ -47,6 +54,7 @@ const isActiveGameplay = computed(
 const phaseLabel = computed(() => {
   const map: Record<GamePhase, string> = {
     lobby: 'Sala inicial',
+    gathering: 'Preparando El Alba',
     dawn: 'El Alba',
     day: 'Día en Salem',
     'night-witches': `Noche ${String(store.nightNumber)}`,
@@ -78,12 +86,46 @@ const winnerDetail = computed(() =>
     : 'Las brujas han superado a los habitantes de Salem.'
 )
 
+function getCharacterName(characterId: CharacterId): string {
+  return SALEM_CHARACTERS.find((character) => character.id === characterId)?.name ?? characterId
+}
+
+function getAmbientTrackForPhase(phase: GamePhase): AmbientTrackId {
+  if (
+    phase === 'dawn' ||
+    phase === 'night-witches' ||
+    phase === 'night-constable' ||
+    phase === 'night-ready-reveal' ||
+    phase === 'reveal'
+  ) {
+    return 'night'
+  }
+  return 'day'
+}
+
+function getTransitionSfx(
+  previousPhase: GamePhase | undefined,
+  nextPhase: GamePhase
+): SfxId | null {
+  if (!previousPhase || previousPhase === nextPhase) return null
+  if (previousPhase === 'lobby' && nextPhase === 'gathering') return 'start'
+  if (previousPhase === 'gathering' && nextPhase === 'dawn') return 'dawn'
+  if (nextPhase === 'day') return 'day'
+  if (previousPhase === 'day' && nextPhase === 'night-witches') return 'night'
+  if (previousPhase === 'night-ready-reveal' && nextPhase === 'reveal') return 'reveal'
+  return null
+}
+
 function syncWakeLockState(): void {
   wakeLockActive.value = isWakeLockActive()
 }
 
 function handleToggleMute(): void {
   muted.value = toggleMute()
+}
+
+function handleStartDawn(): void {
+  store.startDawn()
 }
 
 function selectAccused(playerId: string): void {
@@ -147,8 +189,8 @@ function handleResetGame(): void {
   selectedNewConstableId.value = null
   constableError.value = null
   isConstableModalOpen.value = false
+  isStartTransitionOpen.value = false
   stopNarration()
-  stopAmbient()
   store.resetGame()
   void releaseWakeLock().then(syncWakeLockState)
 }
@@ -162,12 +204,20 @@ watch(
     if (nowActive && !wasActive) {
       void requestWakeLock().then(syncWakeLockState)
     } else if (!nowActive && wasActive) {
-      stopAmbient()
       void releaseWakeLock().then(syncWakeLockState)
     }
 
-    if (phase === 'day') {
-      playAmbient('day')
+    if (phase === 'gathering' && previousPhase === 'lobby') {
+      isStartTransitionOpen.value = true
+    } else if (phase !== 'gathering') {
+      isStartTransitionOpen.value = false
+    }
+
+    playAmbient(getAmbientTrackForPhase(phase))
+
+    const sfx = getTransitionSfx(previousPhase, phase)
+    if (sfx) {
+      playSfx(sfx)
     }
   },
   { immediate: true }
@@ -255,6 +305,67 @@ onScopeDispose(() => {
       :black-cat-holder-id="store.blackCatHolderId" />
 
     <PlayerRegistration v-if="store.phase === 'lobby'" />
+
+    <SalCard
+      v-else-if="store.phase === 'gathering'"
+      variant="elevated"
+      data-testid="gathering-card">
+      <template #header>
+        <div class="game-master__day-header">
+          <h2 class="game-master__section-title">
+            Pueblo reunido
+          </h2>
+
+          <SalBadge tone="accent">
+            {{ store.players.length }} jugadores
+          </SalBadge>
+        </div>
+      </template>
+
+      <div class="game-master__gathering-body">
+        <p class="game-master__hint">
+          Revisa a los participantes antes de cerrar los ojos e iniciar El Alba.
+        </p>
+
+        <ul class="game-master__roster">
+          <li
+            v-for="player in store.players"
+            :key="player.id"
+            class="game-master__roster-item">
+            <VillagerSprite
+              :character-id="player.characterId"
+              size="sm" />
+
+            <div class="game-master__roster-info">
+              <span class="game-master__roster-name">{{ player.name }}</span>
+
+              <span class="game-master__roster-character">
+                {{ getCharacterName(player.characterId) }}
+              </span>
+            </div>
+          </li>
+        </ul>
+
+        <SalButton
+          variant="primary"
+          size="lg"
+          block
+          data-testid="start-dawn-button"
+          @click="handleStartDawn">
+          Iniciar El Alba
+        </SalButton>
+      </div>
+
+      <template #footer>
+        <SalButton
+          variant="ghost"
+          size="sm"
+          data-testid="new-game-button"
+          @click="handleResetGame">
+          Nueva partida
+        </SalButton>
+      </template>
+    </SalCard>
 
     <SalCard
       v-else-if="store.phase === 'day'"
@@ -426,6 +537,8 @@ onScopeDispose(() => {
 
     <RevealModal />
 
+    <GameStartTransition v-model:open="isStartTransitionOpen" />
+
     <GameRulesModal v-model:open="isRulesOpen" />
   </section>
 </template>
@@ -482,6 +595,53 @@ onScopeDispose(() => {
   display: flex;
   flex-direction: column;
   gap: var(--sal-space-4);
+}
+
+.game-master__gathering-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sal-space-4);
+}
+
+.game-master__roster {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--sal-space-2);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.game-master__roster-item {
+  display: flex;
+  align-items: center;
+  gap: var(--sal-space-3);
+  padding: var(--sal-space-2) var(--sal-space-3);
+  border: 1px solid var(--sal-border-subtle);
+  border-radius: var(--sal-radius-md);
+  background-color: var(--sal-surface-base);
+  min-width: 0;
+}
+
+.game-master__roster-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.game-master__roster-name {
+  font-size: var(--sal-font-size-md);
+  font-weight: var(--sal-font-weight-semibold);
+  color: var(--sal-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-master__roster-character {
+  font-size: var(--sal-font-size-xs);
+  color: var(--sal-text-secondary);
 }
 
 .game-master__accuse {
