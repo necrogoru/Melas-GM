@@ -71,7 +71,7 @@ describe('App', () => {
     })
   })
 
-  it('mounts the GameMasterView and runs end-to-end phase transitions without exposing secret roles', async () => {
+  it('mounts the GameMasterView and runs end-to-end Crier flow from lobby through day and night', async () => {
     const pinia = createPinia()
     setActivePinia(pinia)
     const wrapper = mount(App, {
@@ -107,7 +107,6 @@ describe('App', () => {
     expect(wakeLockMocks.requestWakeLock).toHaveBeenCalled()
     expect(wrapper.get('[data-testid="wake-lock-indicator"]').text()).toContain('Pantalla activa')
     expect(wrapper.find('[data-testid="game-start-transition"]').exists()).toBe(true)
-    expect(wrapper.find('[data-testid="dawn-witches-accept"]').exists()).toBe(false)
 
     // Skip transition overlay by clicking it
     await wrapper.get('[data-testid="game-start-transition"]').trigger('click')
@@ -127,123 +126,56 @@ describe('App', () => {
     expect(store.phase).toBe('dawn')
     expect(audioMocks.playSfx).toHaveBeenCalledWith('dawn')
     expect(audioMocks.playAmbient).toHaveBeenCalledWith('night')
+    expect(wrapper.get('[role="dialog"]').text()).toContain('El Alba · Brujas')
 
-    // Dawn step 1: Witches (Ana = 0) + Black Cat (Clara = 2)
-    await wrapper.get('[data-testid="witch-option-0"]').trigger('click')
-    await wrapper.get('[data-testid="black-cat-option-2"]').trigger('click')
-    await wrapper.get('[data-testid="dawn-witches-accept"]').trigger('click')
-    await nextTick()
-
-    expect(store.dawnStep).toBe('constable')
-
-    // Dawn step 2: Constable (Beto = 1)
-    await wrapper.get('[data-testid="constable-option-1"]').trigger('click')
-    await wrapper.get('[data-testid="dawn-constable-accept"]').trigger('click')
+    // Single-step Dawn completes into Day
+    await wrapper.get('[data-testid="dawn-complete-button"]').trigger('click')
     await nextTick()
 
     expect(store.phase).toBe('day')
     expect(audioMocks.playSfx).toHaveBeenCalledWith('day')
     expect(audioMocks.playAmbient).toHaveBeenCalledWith('day')
     expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    // Public Black Cat badge is shown on Clara, but Witch/Constable roles are never shown
-    expect(wrapper.text()).toContain('Gato Negro')
-    expect(wrapper.text()).not.toContain('Bruja:')
-    expect(wrapper.text()).not.toContain('Alguacil:')
+    expect(wrapper.find('[data-testid="day-accuse-submit"]').exists()).toBe(false)
+    expect(wrapper.find('[data-testid="open-constable-reassign"]').exists()).toBe(false)
 
-    // Night cycle: Witches target Diego (3), Constable protects Clara (2)
+    // Night cycle: Witches -> Constable -> Confession -> Reveal -> Day
     await wrapper.get('[data-testid="start-night-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('night-witches')
     expect(audioMocks.playSfx).toHaveBeenCalledWith('night')
     expect(audioMocks.playAmbient).toHaveBeenCalledWith('night')
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Noche 1 · Brujas')
 
-    await wrapper.get('[data-testid="night-target-option-3"]').trigger('click')
-    await wrapper.get('[data-testid="night-witches-accept"]').trigger('click')
+    await wrapper.get('[data-testid="night-witches-next"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('night-constable')
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Noche 1 · Alguacil')
 
-    await wrapper.get('[data-testid="night-protect-option-2"]').trigger('click')
-    await wrapper.get('[data-testid="night-constable-accept"]').trigger('click')
+    await wrapper.get('[data-testid="night-constable-next"]').trigger('click')
     await nextTick()
-    expect(store.phase).toBe('night-ready-reveal')
+    expect(store.phase).toBe('night-confession')
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Noche 1 · Confesión')
 
     await wrapper.get('[data-testid="night-reveal-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('reveal')
     expect(audioMocks.playSfx).toHaveBeenCalledWith('reveal')
-    expect(wrapper.text()).toContain('Diego')
+    expect(wrapper.get('[role="dialog"]').text()).toContain('Amanecer · Noche 1')
 
     await wrapper.get('[data-testid="reveal-continue-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('day')
+    expect(audioMocks.playSfx).toHaveBeenCalledWith('day')
+    expect(audioMocks.playAmbient).toHaveBeenCalledWith('day')
 
-    // Day accusation: eliminate Ana (only witch) -> town wins
-    await wrapper.get('[data-testid="day-accuse-submit"]').trigger('click')
-    expect(wrapper.get('[role="alert"]').text()).toContain('acusado')
-
-    await wrapper.get('[data-testid="day-accuse-option-0"]').trigger('click')
+    // Nueva partida returns to lobby and releases wake lock
     wakeLockMocks.isWakeLockActive.mockReturnValue(false)
-    await wrapper.get('[data-testid="day-accuse-submit"]').trigger('click')
-    await nextTick()
-
-    expect(store.phase).toBe('ended')
-    expect(store.winner).toBe('town')
-    expect(wakeLockMocks.releaseWakeLock).toHaveBeenCalled()
-    expect(wrapper.text()).toContain('Pueblo')
-
-    // Play again returns to lobby
-    await wrapper.get('[data-testid="play-again-button"]').trigger('click')
+    await wrapper.get('[data-testid="new-game-button"]').trigger('click')
     await nextTick()
     expect(store.phase).toBe('lobby')
     expect(store.players).toHaveLength(0)
-  })
-
-  it('allows secret Constable reassignment during Day without exposing roles', async () => {
-    const pinia = createPinia()
-    setActivePinia(pinia)
-    const wrapper = mount(App, {
-      global: {
-        plugins: [pinia]
-      }
-    })
-    const store = useGameStore()
-
-    await registerPlayer(wrapper, 'Ana', 0)
-    await registerPlayer(wrapper, 'Beto', 1)
-    await registerPlayer(wrapper, 'Clara', 2)
-    await registerPlayer(wrapper, 'Diego', 3)
-    await wrapper.get('[data-testid="play-button"]').trigger('click')
-    await nextTick()
-    await wrapper.get('[data-testid="start-dawn-button"]').trigger('click')
-    await nextTick()
-
-    await wrapper.get('[data-testid="witch-option-0"]').trigger('click')
-    await wrapper.get('[data-testid="black-cat-option-2"]').trigger('click')
-    await wrapper.get('[data-testid="dawn-witches-accept"]').trigger('click')
-    await nextTick()
-
-    await wrapper.get('[data-testid="constable-option-1"]').trigger('click')
-    await wrapper.get('[data-testid="dawn-constable-accept"]').trigger('click')
-    await nextTick()
-
-    const clara = store.players[2]
-    if (!clara) throw new Error('Expected Clara')
-    expect(store.isConstable(clara.id)).toBe(false)
-
-    await wrapper.get('[data-testid="open-constable-reassign"]').trigger('click')
-    await nextTick()
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(true)
-
-    await wrapper.get('[data-testid="confirm-constable-reassign"]').trigger('click')
-    expect(wrapper.get('[role="alert"]').text()).toContain('Alguacil')
-
-    await wrapper.get('[data-testid="reassign-constable-option-2"]').trigger('click')
-    await wrapper.get('[data-testid="confirm-constable-reassign"]').trigger('click')
-    await nextTick()
-
-    expect(wrapper.find('[role="dialog"]').exists()).toBe(false)
-    expect(store.isConstable(clara.id)).toBe(true)
-    expect(wrapper.text()).not.toContain('Alguacil:')
+    expect(wakeLockMocks.releaseWakeLock).toHaveBeenCalled()
   })
 
   it('opens the Salem 1692 rules guide from the info button', async () => {
@@ -260,6 +192,7 @@ describe('App', () => {
 
     const dialog = wrapper.get('[role="dialog"]')
     expect(dialog.text()).toContain('Guía de Salem 1692')
+    expect(dialog.text()).toContain('Confesión')
     expect(dialog.get('a').attributes('href')).toContain('ultraboardgames.com/salem/game-rules.php')
   })
 })

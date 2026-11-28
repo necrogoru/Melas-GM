@@ -1,11 +1,10 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useGameStore } from '@/stores/gameStore'
 import { playAmbient, playCue, stopNarration, type AudioCueId } from '@/services/audioService'
-import type { ActionResult, DawnStep, GamePhase } from '@/types/game'
+import type { ActionResult, GamePhase } from '@/types/game'
 
-function getDawnCue(phase: GamePhase, step: DawnStep): AudioCueId | null {
-  if (phase !== 'dawn') return null
-  return step === 'witches' ? 'dawn-witches' : 'dawn-constable'
+function getDawnCue(phase: GamePhase): AudioCueId | null {
+  return phase === 'dawn' ? 'dawn-witches' : null
 }
 
 export function useNightFlow() {
@@ -14,8 +13,6 @@ export function useNightFlow() {
   const activeCue = ref<AudioCueId | null>(null)
 
   const isDawnOpen = computed(() => gameStore.phase === 'dawn')
-  const dawnStep = computed(() => gameStore.dawnStep)
-  const alivePlayers = computed(() => gameStore.alivePlayers)
 
   async function playStepCue(cueId: AudioCueId): Promise<void> {
     activeCue.value = cueId
@@ -39,24 +36,19 @@ export function useNightFlow() {
     isNarrating.value = false
   }
 
-  function submitDawnWitches(witchIds: string[], blackCatHolderId: string): ActionResult {
-    return gameStore.confirmDawnWitches(witchIds, blackCatHolderId)
-  }
-
-  function submitDawnConstable(constableId: string): ActionResult {
-    return gameStore.confirmDawnConstable(constableId)
+  function completeDawn(): ActionResult {
+    return gameStore.completeDawn()
   }
 
   watch(
-    [() => gameStore.phase, () => gameStore.dawnStep],
-    ([phase, step], previous) => {
-      const cue = getDawnCue(phase, step)
+    () => gameStore.phase,
+    (phase, previousPhase) => {
+      const cue = getDawnCue(phase)
       if (cue) {
         void playStepCue(cue)
         return
       }
 
-      const previousPhase = previous[0]
       if (previousPhase === 'dawn') {
         stopAudio()
         if (phase === 'day') {
@@ -73,14 +65,11 @@ export function useNightFlow() {
 
   return {
     isDawnOpen,
-    dawnStep,
-    alivePlayers,
     isNarrating,
     activeCue,
     playStepCue,
     replayCue,
     stopAudio,
-    submitDawnWitches,
-    submitDawnConstable
+    completeDawn
   }
 }

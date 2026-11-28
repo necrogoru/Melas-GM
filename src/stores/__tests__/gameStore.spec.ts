@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
 import { SALEM_CHARACTERS } from '@/data/characters'
-import { getWitchLimits, STORAGE_KEY, useGameStore } from '@/stores/gameStore'
+import { STORAGE_KEY, useGameStore } from '@/stores/gameStore'
 
 function charIdAt(index: number) {
   const character = SALEM_CHARACTERS[index]
@@ -22,14 +22,12 @@ function registerPlayers(count: number): string[] {
   return ids
 }
 
-function setupActiveGame(count = 4) {
+function setupDawnGame(count = 4) {
   const store = useGameStore()
-  const ids = registerPlayers(count)
-  const [p1, p2, p3, p4] = ids
-  if (!p1 || !p2 || !p3 || !p4) throw new Error('Expected at least 4 players')
-  store.startGame()
-  store.startDawn()
-  return { store, p1, p2, p3, p4 }
+  registerPlayers(count)
+  expect(store.startGame().ok).toBe(true)
+  expect(store.startDawn().ok).toBe(true)
+  return store
 }
 
 describe('SALEM_CHARACTERS', () => {
@@ -51,6 +49,7 @@ describe('useGameStore', () => {
       const store = useGameStore()
       expect(store.phase).toBe('lobby')
       expect(store.players).toEqual([])
+      expect(store.nightNumber).toBe(0)
       expect(store.canStartGame).toBe(false)
     })
 
@@ -62,6 +61,16 @@ describe('useGameStore', () => {
       expect(store.addPlayer('Alice', charA).ok).toBe(true)
       expect(store.addPlayer('Bob', charA).ok).toBe(false)
       expect(store.players).toHaveLength(1)
+    })
+
+    it('stores only id, name, and characterId on players', () => {
+      const store = useGameStore()
+      const charA = charIdAt(0)
+      expect(store.addPlayer('Alice', charA).ok).toBe(true)
+
+      const alice = store.players[0]
+      expect(alice).toBeDefined()
+      expect(new Set(Object.keys(alice ?? {}))).toEqual(new Set(['characterId', 'id', 'name']))
     })
 
     it('enforces 4 to 12 players to start the game', () => {
@@ -76,7 +85,6 @@ describe('useGameStore', () => {
       expect(store.phase).toBe('gathering')
       expect(store.startDawn().ok).toBe(true)
       expect(store.phase).toBe('dawn')
-      expect(store.dawnStep).toBe('witches')
     })
 
     it('prevents adding more than 12 players', () => {
@@ -99,192 +107,98 @@ describe('useGameStore', () => {
     })
   })
 
-  describe('dawn secret setup', () => {
-    it('stores witches and Black Cat privately without exposing roles on public players', () => {
-      const { store, p1, p2, p3, p4 } = setupActiveGame()
-
-      const witchResult = store.confirmDawnWitches([p1], p3)
-      expect(witchResult.ok).toBe(true)
-      expect(store.dawnStep).toBe('constable')
-      expect(store.blackCatHolderId).toBe(p3)
-
-      for (const player of store.players) {
-        expect('isWitch' in player).toBe(false)
-        expect('isConstable' in player).toBe(false)
-      }
-
-      const constableResult = store.confirmDawnConstable(p2)
-      expect(constableResult.ok).toBe(true)
-      expect(store.phase).toBe('day')
-      expect(store.isConstable(p2)).toBe(true)
-      expect(store.isWitch(p1)).toBe(true)
-      expect(store.isWitch(p4)).toBe(false)
-    })
-
-    it('validates Constable selection in dawn', () => {
-      const { store, p1, p3 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-
-      expect(store.confirmDawnConstable('non-existent').ok).toBe(false)
-      expect(store.phase).toBe('dawn')
-    })
-
-    it('returns official witch limits by player count', () => {
-      expect(getWitchLimits(4)).toEqual({ min: 1, max: 1 })
-      expect(getWitchLimits(5)).toEqual({ min: 1, max: 1 })
-      expect(getWitchLimits(6)).toEqual({ min: 1, max: 2 })
-      expect(getWitchLimits(12)).toEqual({ min: 1, max: 2 })
-    })
-
-    it('enforces max 1 witch for 4-5 players in confirmDawnWitches', () => {
-      const { store, p1, p2, p3 } = setupActiveGame(4)
-      const tooMany = store.confirmDawnWitches([p1, p2], p3)
-      expect(tooMany.ok).toBe(false)
-      expect(store.dawnStep).toBe('witches')
-
-      const valid = store.confirmDawnWitches([p1], p3)
-      expect(valid.ok).toBe(true)
-      expect(store.dawnStep).toBe('constable')
-    })
-
-    it('enforces 1-2 witches for 6-12 players in confirmDawnWitches', () => {
+  describe('town crier phase transitions', () => {
+    it('completes single-step dawn into day and rejects invalid calls', () => {
       const store = useGameStore()
-      const ids = registerPlayers(6)
-      store.startGame()
-      store.startDawn()
+      expect(store.completeDawn().ok).toBe(false)
 
-      const [p1, p2, p3, p4] = ids
-      if (!p1 || !p2 || !p3 || !p4) throw new Error('Expected 6 players')
-
-      const tooMany = store.confirmDawnWitches([p1, p2, p3], p4)
-      expect(tooMany.ok).toBe(false)
-      expect(store.dawnStep).toBe('witches')
-
-      const validTwo = store.confirmDawnWitches([p1, p2], p4)
-      expect(validTwo.ok).toBe(true)
-      expect(store.dawnStep).toBe('constable')
+      setupDawnGame()
+      expect(store.phase).toBe('dawn')
+      expect(store.completeDawn().ok).toBe(true)
+      expect(store.phase).toBe('day')
     })
-  })
 
-  describe('night flow and reveal resolution', () => {
-    it('blocks Constable self-protection', () => {
-      const { store, p1, p2, p3, p4 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-      store.confirmDawnConstable(p2)
+    it('steps through night-witches -> night-constable -> night-confession -> reveal -> day', () => {
+      const store = setupDawnGame()
+      expect(store.completeDawn().ok).toBe(true)
+
+      expect(store.advanceNightStep().ok).toBe(false)
+      expect(store.proceedToDay().ok).toBe(false)
 
       expect(store.startNight().ok).toBe(true)
+      expect(store.nightNumber).toBe(1)
       expect(store.phase).toBe('night-witches')
 
-      expect(store.confirmWitchTarget(p4).ok).toBe(true)
+      expect(store.advanceNightStep().ok).toBe(true)
       expect(store.phase).toBe('night-constable')
 
-      const selfProtect = store.confirmConstableProtection(p2)
-      expect(selfProtect.ok).toBe(false)
-      expect(store.phase).toBe('night-constable')
+      expect(store.advanceNightStep().ok).toBe(true)
+      expect(store.phase).toBe('night-confession')
 
-      const validProtect = store.confirmConstableProtection(p3)
-      expect(validProtect.ok).toBe(true)
-      expect(store.phase).toBe('night-ready-reveal')
-    })
-
-    it('eliminates targeted player when not protected by Constable', () => {
-      const { store, p1, p2, p3, p4 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-      store.confirmDawnConstable(p2)
-
-      store.startNight()
-      store.confirmWitchTarget(p4)
-      store.confirmConstableProtection(p3)
-
-      const reveal = store.revealNightOutcome()
-      expect(reveal.ok).toBe(true)
+      expect(store.advanceNightStep().ok).toBe(true)
       expect(store.phase).toBe('reveal')
-      expect(store.lastResolution).toEqual({
-        nightNumber: 1,
-        targetId: p4,
-        protectedId: p3,
-        killedPlayerId: p4,
-        savedByConstable: false
-      })
-      expect(store.players.find((p) => p.id === p4)?.alive).toBe(false)
-    })
 
-    it('saves targeted player when protected by Constable', () => {
-      const { store, p1, p2, p3, p4 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-      store.confirmDawnConstable(p2)
+      expect(store.advanceNightStep().ok).toBe(false)
+      expect(store.proceedToDay().ok).toBe(true)
+      expect(store.phase).toBe('day')
 
-      store.startNight()
-      store.confirmWitchTarget(p4)
-      store.confirmConstableProtection(p4)
-      store.revealNightOutcome()
-
-      expect(store.lastResolution).toEqual({
-        nightNumber: 1,
-        targetId: p4,
-        protectedId: p4,
-        killedPlayerId: null,
-        savedByConstable: true
-      })
-      expect(store.players.find((p) => p.id === p4)?.alive).toBe(true)
+      expect(store.startNight().ok).toBe(true)
+      expect(store.nightNumber).toBe(2)
+      expect(store.phase).toBe('night-witches')
     })
   })
 
-  describe('day elimination and constable reassignment', () => {
-    it('eliminates an accused player, clears their Constable/Black Cat role, and allows reassignment', () => {
-      const { store, p1, p2, p3 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p2)
-      store.confirmDawnConstable(p2)
+  describe('removal of board-state tracking', () => {
+    it('does not expose secret role, alive, or table resolution state or actions', () => {
+      const store = useGameStore()
+      const removedKeys = [
+        'alivePlayers',
+        'blackCatHolderId',
+        'lastResolution',
+        'winner',
+        'dawnStep',
+        'hasAliveConstable',
+        'isWitch',
+        'isConstable',
+        'confirmDawnWitches',
+        'confirmDawnConstable',
+        'confirmWitchTarget',
+        'confirmConstableProtection',
+        'revealNightOutcome',
+        'eliminatePlayer',
+        'reassignConstable'
+      ]
 
-      const elim = store.eliminatePlayer(p2)
-      expect(elim.ok).toBe(true)
-      expect(store.players.find((p) => p.id === p2)?.alive).toBe(false)
-      expect(store.blackCatHolderId).toBeNull()
-      expect(store.isConstable(p2)).toBe(false)
-
-      expect(store.reassignConstable(p2).ok).toBe(false)
-      expect(store.reassignConstable(p3).ok).toBe(true)
-      expect(store.isConstable(p3)).toBe(true)
-    })
-
-    it('ends the game when all witches are eliminated', () => {
-      const { store, p1, p2, p3 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-      store.confirmDawnConstable(p2)
-
-      store.eliminatePlayer(p1)
-      expect(store.phase).toBe('ended')
-      expect(store.winner).toBe('town')
+      for (const key of removedKeys) {
+        expect(key in store).toBe(false)
+      }
     })
   })
 
   describe('localStorage persistence', () => {
-    it('persists state to localStorage and restores it on store re-instantiation', () => {
-      const { store, p1, p2, p3, p4 } = setupActiveGame()
-      store.confirmDawnWitches([p1], p3)
-      store.confirmDawnConstable(p2)
+    it('persists Crier state under v2 key and restores it on store re-instantiation', () => {
+      expect(STORAGE_KEY).toBe('salem-gm:state:v2')
+      const store = setupDawnGame()
+      store.completeDawn()
       store.startNight()
-      store.confirmWitchTarget(p4)
-      store.confirmConstableProtection(p3)
+      store.advanceNightStep()
+      store.advanceNightStep()
 
+      expect(store.phase).toBe('night-confession')
       expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
 
       setActivePinia(createPinia())
       const restored = useGameStore()
 
-      expect(restored.phase).toBe('night-ready-reveal')
+      expect(restored.phase).toBe('night-confession')
       expect(restored.nightNumber).toBe(1)
       expect(restored.players).toHaveLength(4)
-      expect(restored.blackCatHolderId).toBe(p3)
-      expect(restored.isWitch(p1)).toBe(true)
-      expect(restored.isConstable(p2)).toBe(true)
 
-      const reveal = restored.revealNightOutcome()
-      expect(reveal.ok).toBe(true)
-      expect(restored.lastResolution?.killedPlayerId).toBe(p4)
+      expect(restored.advanceNightStep().ok).toBe(true)
+      expect(restored.phase).toBe('reveal')
     })
 
-    it('falls back safely when localStorage contains corrupt JSON or invalid shape', () => {
+    it('falls back safely when localStorage contains corrupt JSON, invalid shape, or legacy phases', () => {
       localStorage.setItem(STORAGE_KEY, '{corrupt json')
       setActivePinia(createPinia())
       const fromCorrupt = useGameStore()
@@ -299,10 +213,18 @@ describe('useGameStore', () => {
       const fromInvalid = useGameStore()
       expect(fromInvalid.phase).toBe('lobby')
       expect(fromInvalid.players).toEqual([])
+
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({ phase: 'ended', players: [], nightNumber: 1 })
+      )
+      setActivePinia(createPinia())
+      const fromLegacyPhase = useGameStore()
+      expect(fromLegacyPhase.phase).toBe('lobby')
     })
 
     it('clears persisted state on resetGame', () => {
-      const { store } = setupActiveGame()
+      const store = setupDawnGame()
       expect(localStorage.getItem(STORAGE_KEY)).not.toBeNull()
 
       store.resetGame()
@@ -312,6 +234,7 @@ describe('useGameStore', () => {
       const fresh = useGameStore()
       expect(fresh.phase).toBe('lobby')
       expect(fresh.players).toEqual([])
+      expect(fresh.nightNumber).toBe(0)
     })
   })
 })

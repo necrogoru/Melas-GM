@@ -9,8 +9,7 @@ function createAllPlayers(): Player[] {
   return SALEM_CHARACTERS.map((character, index) => ({
     id: `player-${String(index + 1)}`,
     name: `Jugador ${String(index + 1)}`,
-    characterId: character.id,
-    alive: true
+    characterId: character.id
   }))
 }
 
@@ -93,18 +92,11 @@ describe('VillagerSprite', () => {
 describe('MiniatureVillage', () => {
   it('renders church steeple, miniature houses, lanterns, and all 12 positioned villagers', () => {
     const players = createAllPlayers()
-    const deadPlayer = players[2]
-    const catPlayer = players[4]
-    if (!deadPlayer || !catPlayer) {
-      throw new Error('Expected at least 5 players')
-    }
-    deadPlayer.alive = false
 
     const wrapper = mount(MiniatureVillage, {
       props: {
         players,
-        phase: 'day',
-        blackCatHolderId: catPlayer.id
+        phase: 'day'
       }
     })
 
@@ -114,25 +106,20 @@ describe('MiniatureVillage', () => {
 
     const sprites = wrapper.findAllComponents(VillagerSprite)
     expect(sprites).toHaveLength(12)
-
-    const deadSprite = sprites[2]
-    expect(deadSprite?.classes()).toContain('is-dead')
-
-    const catSprite = sprites[4]
-    expect(catSprite?.text()).toContain('Gato Negro')
-
-    expect(wrapper.html()).not.toMatch(/bruja|witch|alguacil|constable/i)
+    expect(sprites.every((sprite) => sprite.classes().includes('is-alive'))).toBe(true)
+    expect(wrapper.html()).not.toMatch(/bruja|witch|alguacil|constable|gato negro|eliminado/i)
   })
 
   it('transitions sky mood across lobby, dawn, day, and night phases', () => {
     const players = createAllPlayers().slice(0, 4)
     const cases: Array<{ phase: GamePhase; expectedSky: string }> = [
       { phase: 'lobby', expectedSky: 'twilight' },
+      { phase: 'gathering', expectedSky: 'twilight' },
       { phase: 'dawn', expectedSky: 'dawn' },
       { phase: 'day', expectedSky: 'day' },
       { phase: 'night-witches', expectedSky: 'night' },
       { phase: 'night-constable', expectedSky: 'night' },
-      { phase: 'night-ready-reveal', expectedSky: 'night' },
+      { phase: 'night-confession', expectedSky: 'night' },
       { phase: 'reveal', expectedSky: 'day' }
     ]
 
@@ -140,8 +127,7 @@ describe('MiniatureVillage', () => {
       const wrapper = mount(MiniatureVillage, {
         props: {
           players,
-          phase,
-          blackCatHolderId: null
+          phase
         }
       })
 
