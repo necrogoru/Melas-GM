@@ -43,13 +43,16 @@ withDefaults(defineProps<SalCardProps>(), {
   display: flex;
   flex-direction: column;
   gap: var(--sal-space-3);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-lg);
-  box-shadow: var(--sal-shadow-card);
+  border: var(--sal-border-width-step) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  box-shadow: var(--sal-shadow-bevel), var(--sal-shadow-pixel-md);
+  transition:
+    border-color var(--sal-transition-instant),
+    box-shadow var(--sal-transition-instant);
 }
 
 .sal-card--default {
-  background-color: var(--sal-surface-base);
+  background-color: var(--sal-surface-panel);
   color: var(--sal-text-primary);
 }
 
@@ -83,12 +86,28 @@ withDefaults(defineProps<SalCardProps>(), {
 
 .sal-card.is-selected {
   border-color: var(--sal-accent-primary);
-  box-shadow: 0 0 0 1px var(--sal-accent-primary);
+  box-shadow:
+    0 0 0 var(--sal-border-width-thin) var(--sal-accent-primary),
+    var(--sal-shadow-bevel),
+    var(--sal-shadow-pixel-md);
 }
 
 .sal-card__header {
-  font-weight: var(--sal-font-weight-semibold);
-  font-size: var(--sal-font-size-lg);
+  font-family: var(--sal-font-display);
+  font-weight: var(--sal-font-weight-bold);
+  font-size: var(--sal-font-size-md);
+  letter-spacing: var(--sal-tracking-tight);
+  padding-bottom: var(--sal-space-2);
+  border-bottom: var(--sal-border-width-thin) solid var(--sal-border-hud);
+}
+
+.sal-card--pad-none .sal-card__header {
+  padding: var(--sal-space-3) var(--sal-space-4);
+  background-color: var(--sal-surface-header);
+}
+
+.sal-card--parchment .sal-card__header {
+  border-bottom-color: var(--sal-border-parchment);
 }
 
 .sal-card__footer {
@@ -96,8 +115,12 @@ withDefaults(defineProps<SalCardProps>(), {
   align-items: center;
   justify-content: flex-end;
   gap: var(--sal-space-2);
-  padding-top: var(--sal-space-2);
-  border-top: 1px solid var(--sal-border-subtle);
+  padding-top: var(--sal-space-3);
+  border-top: var(--sal-border-width-thin) solid var(--sal-border-hud);
+}
+
+.sal-card--pad-none .sal-card__footer {
+  padding: var(--sal-space-3) var(--sal-space-4);
 }
 
 .sal-card--parchment .sal-card__footer {

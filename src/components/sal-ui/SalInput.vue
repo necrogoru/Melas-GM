@@ -70,8 +70,11 @@ const errorId = useId()
 }
 
 .sal-input__label {
-  font-size: var(--sal-font-size-sm);
-  font-weight: var(--sal-font-weight-medium);
+  font-family: var(--sal-font-mono);
+  font-size: var(--sal-font-size-xs);
+  font-weight: var(--sal-font-weight-semibold);
+  letter-spacing: var(--sal-tracking-hud);
+  text-transform: uppercase;
   color: var(--sal-text-secondary);
 }
 
@@ -79,13 +82,16 @@ const errorId = useId()
   min-height: var(--sal-control-md);
   width: 100%;
   padding: 0 var(--sal-space-3);
-  border: 1px solid var(--sal-border-strong);
-  border-radius: var(--sal-radius-md);
-  background-color: var(--sal-surface-base);
+  border: var(--sal-border-width-step) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-pixel);
+  background-color: var(--sal-surface-inset);
+  box-shadow: var(--sal-shadow-pixel-inset);
   color: var(--sal-text-primary);
   font-family: inherit;
   font-size: var(--sal-font-size-md);
-  transition: border-color var(--sal-transition-fast);
+  transition:
+    border-color var(--sal-transition-instant),
+    background-color var(--sal-transition-instant);
 }
 
 .sal-input__control::placeholder {
@@ -93,8 +99,12 @@ const errorId = useId()
 }
 
 .sal-input__control:focus {
-  outline: none;
   border-color: var(--sal-border-focus);
+}
+
+.sal-input__control:focus-visible {
+  outline: var(--sal-focus-ring);
+  outline-offset: var(--sal-focus-offset);
 }
 
 .sal-input.is-error .sal-input__control {
@@ -108,6 +118,7 @@ const errorId = useId()
 
 .sal-input__error {
   margin: 0;
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
   color: var(--sal-danger-text);
 }

@@ -91,11 +91,17 @@ onScopeDispose(() => {
     :title="modalTitle">
     <div class="night-flow">
       <div class="night-flow__audio-bar">
-        <SalBadge
-          :tone="isNarrating ? 'accent' : 'neutral'"
-          size="sm">
-          {{ isNarrating ? 'Pregonero hablando…' : 'Audio en pausa' }}
-        </SalBadge>
+        <div class="night-flow__audio-status">
+          <span
+            :class="['night-flow__audio-dot', { 'is-live': isNarrating }]"
+            aria-hidden="true" />
+
+          <SalBadge
+            :tone="isNarrating ? 'accent' : 'neutral'"
+            size="sm">
+            {{ isNarrating ? 'Pregonero hablando…' : 'Audio en pausa' }}
+          </SalBadge>
+        </div>
 
         <SalButton
           variant="ghost"
@@ -166,7 +172,7 @@ onScopeDispose(() => {
 .night-flow {
   display: flex;
   flex-direction: column;
-  gap: var(--sal-space-4);
+  gap: var(--sal-space-3);
 }
 
 .night-flow__audio-bar {
@@ -174,12 +180,58 @@ onScopeDispose(() => {
   align-items: center;
   justify-content: space-between;
   gap: var(--sal-space-2);
+  padding: var(--sal-space-2) var(--sal-space-3);
+  background-color: var(--sal-surface-panel);
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  box-shadow: var(--sal-shadow-bevel);
+}
+
+.night-flow__audio-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sal-space-2);
+}
+
+.night-flow__audio-dot {
+  width: var(--sal-space-2);
+  height: var(--sal-space-2);
+  border-radius: var(--sal-radius-pixel);
+  background-color: var(--sal-text-muted);
+  flex-shrink: 0;
+}
+
+.night-flow__audio-dot.is-live {
+  background-color: var(--sal-telemetry-live);
+  animation: sal-audio-pulse 900ms steps(2, end) infinite;
+}
+
+.night-flow__ready {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sal-space-2);
 }
 
 .night-flow__intro {
   margin: 0;
   font-size: var(--sal-font-size-sm);
   color: var(--sal-text-secondary);
-  line-height: 1.5;
+  line-height: 1.45;
+}
+
+@keyframes sal-audio-pulse {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .night-flow__audio-dot.is-live {
+    animation: none;
+  }
 }
 </style>

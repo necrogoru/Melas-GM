@@ -2,10 +2,15 @@
   /* Surfaces */
   --sal-bg-night: #12100e;
   --sal-surface-base: #1c1815;
+  --sal-surface-panel: #181411;
+  --sal-surface-header: #211c17;
   --sal-surface-elevated: #26211c;
+  --sal-surface-hover: #2d2620;
+  --sal-surface-inset: #100e0c;
   --sal-surface-parchment: #f4ebd9;
   --sal-surface-parchment-alt: #e8dcc4;
   --sal-surface-overlay: rgba(12, 10, 8, 0.78);
+  --sal-surface-glass: rgba(24, 20, 17, 0.88);
 
   /* Text */
   --sal-text-primary: #f5efe6;
@@ -20,8 +25,9 @@
   --sal-accent-primary-active: #b07524;
   --sal-accent-contrast: #1a130b;
   --sal-accent-soft: rgba(201, 138, 50, 0.18);
+  --sal-accent-glow: rgba(201, 138, 50, 0.35);
 
-  /* Semantic Status */
+  /* Semantic Status & HUD Telemetry */
   --sal-danger: #9e2a2b;
   --sal-danger-hover: #b53435;
   --sal-danger-soft: rgba(158, 42, 43, 0.2);
@@ -32,12 +38,24 @@
   --sal-warning: #b3741e;
   --sal-warning-soft: rgba(179, 116, 30, 0.22);
   --sal-warning-text: #f2cf99;
+  --sal-telemetry-live: #4caf73;
+  --sal-telemetry-live-soft: rgba(76, 175, 115, 0.16);
+  --sal-telemetry-dawn: #d89b44;
+  --sal-telemetry-day: #e0b86b;
+  --sal-telemetry-night: #7a8fb8;
+  --sal-telemetry-night-soft: rgba(122, 143, 184, 0.18);
+  --sal-telemetry-reveal: #c95b4b;
 
-  /* Borders */
+  /* Borders & Stepped Bevels */
   --sal-border-subtle: #352d25;
+  --sal-border-hud: #44392e;
   --sal-border-strong: #524538;
   --sal-border-parchment: #cbb999;
   --sal-border-focus: #e0a44b;
+  --sal-border-bevel-light: rgba(245, 239, 230, 0.12);
+  --sal-border-bevel-dark: rgba(0, 0, 0, 0.65);
+  --sal-border-width-thin: 1px;
+  --sal-border-width-step: 2px;
 
   /* Spacing (4px grid) */
   --sal-space-1: 4px;
@@ -48,12 +66,19 @@
   --sal-space-6: 24px;
   --sal-space-8: 32px;
 
+  /* Layout & Focus */
+  --sal-container-max: 1120px;
+  --sal-focus-ring: 2px solid var(--sal-border-focus);
+  --sal-focus-offset: 2px;
+
   /* Control Heights */
   --sal-control-sm: 32px;
   --sal-control-md: 40px;
   --sal-control-lg: 48px;
 
   /* Radii */
+  --sal-radius-none: 0px;
+  --sal-radius-pixel: 2px;
   --sal-radius-sm: 4px;
   --sal-radius-md: 8px;
   --sal-radius-lg: 12px;
@@ -61,19 +86,36 @@
   --sal-radius-full: 9999px;
 
   /* Typography */
+  --sal-font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --sal-font-display: 'Silkscreen', 'Courier New', ui-monospace, monospace;
+  --sal-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --sal-font-size-2xs: 0.6875rem;
   --sal-font-size-xs: 0.75rem;
   --sal-font-size-sm: 0.875rem;
   --sal-font-size-md: 1rem;
   --sal-font-size-lg: 1.125rem;
   --sal-font-size-xl: 1.375rem;
+  --sal-font-size-2xl: 1.75rem;
   --sal-font-weight-normal: 400;
   --sal-font-weight-medium: 500;
   --sal-font-weight-semibold: 600;
   --sal-font-weight-bold: 700;
+  --sal-tracking-hud: 0.08em;
+  --sal-tracking-tight: -0.01em;
 
-  /* Elevation & Motion */
+  /* Elevation, Pixel Shadows & Motion */
   --sal-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.35);
   --sal-shadow-modal: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --sal-shadow-pixel-sm: 2px 2px 0 #090807;
+  --sal-shadow-pixel-md: 4px 4px 0 #090807;
+  --sal-shadow-pixel-inset: inset 0 2px 0 rgba(0, 0, 0, 0.45);
+  --sal-shadow-bevel:
+    inset 1px 1px 0 var(--sal-border-bevel-light),
+    inset -1px -1px 0 var(--sal-border-bevel-dark);
+  --sal-z-backdrop: 0;
+  --sal-z-shell: 1;
+  --sal-z-hud: 10;
   --sal-z-modal: 50;
+  --sal-transition-instant: 90ms steps(2, end);
   --sal-transition-fast: 150ms ease;
 }

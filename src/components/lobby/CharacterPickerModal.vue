@@ -52,9 +52,11 @@ function selectCharacter(characterId: CharacterId): void {
             }
           ]"
           @click="selectCharacter(character.id)">
-          <VillagerSprite
-            :character-id="character.id"
-            size="sm" />
+          <div class="character-picker__portrait">
+            <VillagerSprite
+              :character-id="character.id"
+              size="md" />
+          </div>
 
           <div class="character-picker__info">
             <div class="character-picker__heading">
@@ -97,8 +99,15 @@ function selectCharacter(characterId: CharacterId): void {
   gap: var(--sal-space-2);
 }
 
+@media (min-width: 520px) {
+  .character-picker__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 .character-picker__item {
   display: flex;
+  min-width: 0;
 }
 
 .character-picker__option {
@@ -108,25 +117,27 @@ function selectCharacter(characterId: CharacterId): void {
   align-items: center;
   gap: var(--sal-space-3);
   padding: var(--sal-space-3);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-lg);
-  background-color: var(--sal-surface-elevated);
+  border: var(--sal-border-width-step) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-panel);
   color: var(--sal-text-primary);
   font-family: inherit;
   text-align: left;
   cursor: pointer;
+  box-shadow: var(--sal-shadow-bevel), var(--sal-shadow-pixel-sm);
   transition:
-    border-color var(--sal-transition-fast),
-    background-color var(--sal-transition-fast);
+    border-color var(--sal-transition-instant),
+    background-color var(--sal-transition-instant);
 }
 
 .character-picker__option:hover:not(:disabled) {
   border-color: var(--sal-accent-primary);
+  background-color: var(--sal-surface-elevated);
 }
 
 .character-picker__option:focus-visible {
-  outline: 2px solid var(--sal-border-focus);
-  outline-offset: 2px;
+  outline: var(--sal-focus-ring);
+  outline-offset: var(--sal-focus-offset);
 }
 
 .character-picker__option.is-selected {
@@ -137,6 +148,19 @@ function selectCharacter(characterId: CharacterId): void {
 .character-picker__option.is-taken {
   opacity: 0.48;
   cursor: not-allowed;
+  box-shadow: none;
+}
+
+.character-picker__portrait {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: var(--sal-space-2);
+  border: var(--sal-border-width-thin) solid var(--sal-border-subtle);
+  border-radius: var(--sal-radius-pixel);
+  background-color: var(--sal-surface-inset);
+  box-shadow: var(--sal-shadow-pixel-inset);
 }
 
 .character-picker__info {
@@ -152,15 +176,18 @@ function selectCharacter(characterId: CharacterId): void {
   align-items: center;
   justify-content: space-between;
   gap: var(--sal-space-2);
+  flex-wrap: wrap;
 }
 
 .character-picker__name {
-  font-size: var(--sal-font-size-md);
-  font-weight: var(--sal-font-weight-semibold);
+  font-family: var(--sal-font-display);
+  font-size: var(--sal-font-size-sm);
+  font-weight: var(--sal-font-weight-bold);
   color: var(--sal-text-primary);
 }
 
 .character-picker__role {
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
   font-weight: var(--sal-font-weight-medium);
   color: var(--sal-accent-primary-hover);

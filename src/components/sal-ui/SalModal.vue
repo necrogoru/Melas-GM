@@ -94,13 +94,14 @@ function close() {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: var(--sal-space-4);
-  padding: var(--sal-space-5);
-  border: 1px solid var(--sal-border-strong);
-  border-radius: var(--sal-radius-xl);
+  border: var(--sal-border-width-step) solid var(--sal-border-strong);
+  border-radius: var(--sal-radius-sm);
   background-color: var(--sal-surface-base);
   color: var(--sal-text-primary);
-  box-shadow: var(--sal-shadow-modal);
+  box-shadow:
+    var(--sal-shadow-bevel),
+    var(--sal-shadow-pixel-md),
+    var(--sal-shadow-modal);
 }
 
 .sal-modal__header {
@@ -108,12 +109,17 @@ function close() {
   align-items: center;
   justify-content: space-between;
   gap: var(--sal-space-3);
+  padding: var(--sal-space-3) var(--sal-space-5);
+  background-color: var(--sal-surface-header);
+  border-bottom: var(--sal-border-width-step) solid var(--sal-border-hud);
 }
 
 .sal-modal__title {
   margin: 0;
-  font-size: var(--sal-font-size-lg);
+  font-family: var(--sal-font-display);
+  font-size: var(--sal-font-size-md);
   font-weight: var(--sal-font-weight-bold);
+  letter-spacing: var(--sal-tracking-hud);
 }
 
 .sal-modal__close {
@@ -123,27 +129,34 @@ function close() {
   min-width: var(--sal-control-sm);
   min-height: var(--sal-control-sm);
   padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--sal-radius-md);
-  background-color: transparent;
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-pixel);
+  background-color: var(--sal-surface-elevated);
+  box-shadow: var(--sal-shadow-bevel);
   color: var(--sal-text-secondary);
   cursor: pointer;
+  transition:
+    background-color var(--sal-transition-instant),
+    border-color var(--sal-transition-instant),
+    color var(--sal-transition-instant);
 }
 
 .sal-modal__close:hover {
-  background-color: var(--sal-surface-elevated);
+  background-color: var(--sal-surface-hover);
+  border-color: var(--sal-accent-primary);
   color: var(--sal-text-primary);
 }
 
 .sal-modal__close:focus-visible {
-  outline: 2px solid var(--sal-border-focus);
-  outline-offset: 2px;
+  outline: var(--sal-focus-ring);
+  outline-offset: var(--sal-focus-offset);
 }
 
 .sal-modal__body {
   display: flex;
   flex-direction: column;
   gap: var(--sal-space-3);
+  padding: var(--sal-space-4) var(--sal-space-5);
 }
 
 .sal-modal__footer {
@@ -151,5 +164,8 @@ function close() {
   align-items: center;
   justify-content: flex-end;
   gap: var(--sal-space-2);
+  padding: var(--sal-space-3) var(--sal-space-5);
+  background-color: var(--sal-surface-panel);
+  border-top: var(--sal-border-width-thin) solid var(--sal-border-hud);
 }
 </style>

@@ -9,6 +9,7 @@ import SalBadge from '@/components/sal-ui/SalBadge.vue'
 import SalButton from '@/components/sal-ui/SalButton.vue'
 import SalCard from '@/components/sal-ui/SalCard.vue'
 import GameStartTransition from '@/components/village/GameStartTransition.vue'
+import IsometricSalemBackdrop from '@/components/village/IsometricSalemBackdrop.vue'
 import MiniatureVillage from '@/components/village/MiniatureVillage.vue'
 import VillagerSprite from '@/components/village/VillagerSprite.vue'
 import { SALEM_CHARACTERS } from '@/data/characters'
@@ -54,6 +55,23 @@ const phaseLabel = computed(() => {
     reveal: `Amanecer · Noche ${String(store.nightNumber)}`
   }
   return map[store.phase]
+})
+
+const phaseTone = computed<'neutral' | 'accent' | 'danger' | 'success' | 'warning'>(() => {
+  switch (store.phase) {
+    case 'gathering':
+    case 'dawn':
+      return 'warning'
+    case 'day':
+      return 'accent'
+    case 'night-witches':
+    case 'night-constable':
+    case 'night-confession':
+    case 'reveal':
+      return 'danger'
+    default:
+      return 'neutral'
+  }
 })
 
 const wakeLockLabel = computed(() => {
@@ -153,21 +171,34 @@ onScopeDispose(() => {
 </script>
 
 <template>
+  <IsometricSalemBackdrop :phase="store.phase" />
+
   <section class="game-master">
     <header class="game-master__header">
       <div class="game-master__brand">
+        <span
+          class="game-master__brand-dot"
+          aria-hidden="true" />
+
         <h1 class="game-master__title">
           Salem 1692
         </h1>
 
         <SalBadge
-          tone="accent"
+          :tone="phaseTone"
           size="sm">
           {{ phaseLabel }}
         </SalBadge>
       </div>
 
       <div class="game-master__controls">
+        <SalBadge
+          v-if="store.players.length > 0"
+          tone="neutral"
+          size="sm">
+          {{ store.players.length }} jugadores
+        </SalBadge>
+
         <SalBadge
           :tone="wakeLockTone"
           size="sm"
@@ -221,113 +252,139 @@ onScopeDispose(() => {
       </div>
     </header>
 
-    <MiniatureVillage
-      :players="store.players"
-      :phase="store.phase" />
+    <div class="game-master__workspace">
+      <div class="game-master__stage">
+        <MiniatureVillage
+          :players="store.players"
+          :phase="store.phase" />
+      </div>
 
-    <PlayerRegistration v-if="store.phase === 'lobby'" />
+      <div class="game-master__panel">
+        <PlayerRegistration v-if="store.phase === 'lobby'" />
 
-    <SalCard
-      v-else-if="store.phase === 'gathering'"
-      variant="elevated"
-      data-testid="gathering-card">
-      <template #header>
-        <div class="game-master__day-header">
-          <h2 class="game-master__section-title">
-            Pueblo reunido
-          </h2>
+        <SalCard
+          v-else-if="store.phase === 'gathering'"
+          variant="elevated"
+          data-testid="gathering-card">
+          <template #header>
+            <div class="game-master__day-header">
+              <h2 class="game-master__section-title">
+                Pueblo reunido
+              </h2>
 
-          <SalBadge tone="accent">
-            {{ store.players.length }} jugadores
-          </SalBadge>
-        </div>
-      </template>
-
-      <div class="game-master__gathering-body">
-        <p class="game-master__hint">
-          Revisa a los participantes antes de cerrar los ojos e iniciar El Alba.
-        </p>
-
-        <ul class="game-master__roster">
-          <li
-            v-for="player in store.players"
-            :key="player.id"
-            class="game-master__roster-item">
-            <VillagerSprite
-              :character-id="player.characterId"
-              size="sm" />
-
-            <div class="game-master__roster-info">
-              <span class="game-master__roster-name">{{ player.name }}</span>
-
-              <span class="game-master__roster-character">
-                {{ getCharacterName(player.characterId) }}
-              </span>
+              <SalBadge tone="accent">
+                {{ store.players.length }} jugadores
+              </SalBadge>
             </div>
-          </li>
-        </ul>
+          </template>
 
-        <SalButton
-          variant="primary"
-          size="lg"
-          block
-          data-testid="start-dawn-button"
-          @click="handleStartDawn">
-          Iniciar El Alba
-        </SalButton>
+          <div class="game-master__gathering-body">
+            <p class="game-master__hint">
+              Revisa a los participantes antes de cerrar los ojos e iniciar El Alba.
+            </p>
+
+            <ul class="game-master__roster">
+              <li
+                v-for="player in store.players"
+                :key="player.id"
+                class="game-master__roster-item">
+                <VillagerSprite
+                  :character-id="player.characterId"
+                  size="sm" />
+
+                <div class="game-master__roster-info">
+                  <span class="game-master__roster-name">{{ player.name }}</span>
+
+                  <span class="game-master__roster-character">
+                    {{ getCharacterName(player.characterId) }}
+                  </span>
+                </div>
+              </li>
+            </ul>
+
+            <SalButton
+              variant="primary"
+              size="lg"
+              block
+              data-testid="start-dawn-button"
+              @click="handleStartDawn">
+              Iniciar El Alba
+            </SalButton>
+          </div>
+
+          <template #footer>
+            <SalButton
+              variant="ghost"
+              size="sm"
+              data-testid="new-game-button"
+              @click="handleResetGame">
+              Nueva partida
+            </SalButton>
+          </template>
+        </SalCard>
+
+        <SalCard
+          v-else-if="store.phase === 'day'"
+          variant="elevated">
+          <template #header>
+            <div class="game-master__day-header">
+              <h2 class="game-master__section-title">
+                Día en Salem
+              </h2>
+
+              <SalBadge tone="neutral">
+                {{ store.players.length }} jugadores
+              </SalBadge>
+            </div>
+          </template>
+
+          <div class="game-master__day-body">
+            <p class="game-master__hint">
+              El pueblo debate, roba cartas y juega acusaciones en la mesa. Cuando caiga la noche, continúa aquí.
+            </p>
+
+            <SalButton
+              variant="primary"
+              size="lg"
+              block
+              data-testid="start-night-button"
+              @click="handleStartNight">
+              Llegó la noche
+            </SalButton>
+          </div>
+
+          <template #footer>
+            <SalButton
+              variant="ghost"
+              size="sm"
+              data-testid="new-game-button"
+              @click="handleResetGame">
+              Nueva partida
+            </SalButton>
+          </template>
+        </SalCard>
+
+        <SalCard
+          v-else
+          variant="default">
+          <template #header>
+            <div class="game-master__day-header">
+              <h2 class="game-master__section-title">
+                {{ phaseLabel }}
+              </h2>
+
+              <SalBadge :tone="phaseTone">
+                En curso
+              </SalBadge>
+            </div>
+          </template>
+
+          <p class="game-master__hint">
+            Sigue las instrucciones en pantalla para continuar con la ronda.
+          </p>
+        </SalCard>
       </div>
-
-      <template #footer>
-        <SalButton
-          variant="ghost"
-          size="sm"
-          data-testid="new-game-button"
-          @click="handleResetGame">
-          Nueva partida
-        </SalButton>
-      </template>
-    </SalCard>
-
-    <SalCard
-      v-else-if="store.phase === 'day'"
-      variant="elevated">
-      <template #header>
-        <div class="game-master__day-header">
-          <h2 class="game-master__section-title">
-            Día en Salem
-          </h2>
-
-          <SalBadge tone="neutral">
-            {{ store.players.length }} jugadores
-          </SalBadge>
-        </div>
-      </template>
-
-      <div class="game-master__day-body">
-        <p class="game-master__hint">
-          El pueblo debate, roba cartas y juega acusaciones en la mesa. Cuando caiga la noche, continúa aquí.
-        </p>
-
-        <SalButton
-          variant="primary"
-          size="lg"
-          block
-          data-testid="start-night-button"
-          @click="handleStartNight">
-          Llegó la noche
-        </SalButton>
-      </div>
-
-      <template #footer>
-        <SalButton
-          variant="ghost"
-          size="sm"
-          data-testid="new-game-button"
-          @click="handleResetGame">
-          Nueva partida
-        </SalButton>
-      </template>
-    </SalCard>
+    </div>
 
     <DawnSetupModal />
 
@@ -352,8 +409,13 @@ onScopeDispose(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--sal-space-2);
+  gap: var(--sal-space-3);
   flex-wrap: wrap;
+  padding: var(--sal-space-3) var(--sal-space-4);
+  background-color: var(--sal-surface-glass);
+  border: var(--sal-border-width-step) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  box-shadow: var(--sal-shadow-bevel), var(--sal-shadow-pixel-sm);
 }
 
 .game-master__brand {
@@ -363,10 +425,21 @@ onScopeDispose(() => {
   flex-wrap: wrap;
 }
 
+.game-master__brand-dot {
+  width: var(--sal-space-2);
+  height: var(--sal-space-2);
+  background-color: var(--sal-accent-primary);
+  border: var(--sal-border-width-thin) solid var(--sal-border-focus);
+  border-radius: var(--sal-radius-pixel);
+  flex-shrink: 0;
+}
+
 .game-master__title {
   margin: 0;
+  font-family: var(--sal-font-display);
   font-size: var(--sal-font-size-xl);
   font-weight: var(--sal-font-weight-bold);
+  letter-spacing: var(--sal-tracking-tight);
   color: var(--sal-text-primary);
 }
 
@@ -374,6 +447,31 @@ onScopeDispose(() => {
   display: flex;
   align-items: center;
   gap: var(--sal-space-2);
+  flex-wrap: wrap;
+}
+
+.game-master__workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sal-space-4);
+  align-items: start;
+}
+
+.game-master__stage,
+.game-master__panel {
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .game-master__workspace {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr);
+    gap: var(--sal-space-5);
+  }
+
+  .game-master__stage {
+    position: sticky;
+    top: var(--sal-space-4);
+  }
 }
 
 .game-master__day-header {
@@ -385,16 +483,12 @@ onScopeDispose(() => {
 
 .game-master__section-title {
   margin: 0;
+  font-family: var(--sal-font-display);
   font-size: var(--sal-font-size-lg);
   font-weight: var(--sal-font-weight-bold);
 }
 
-.game-master__day-body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sal-space-4);
-}
-
+.game-master__day-body,
 .game-master__gathering-body {
   display: flex;
   flex-direction: column;
@@ -403,7 +497,7 @@ onScopeDispose(() => {
 
 .game-master__roster {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
   gap: var(--sal-space-2);
   list-style: none;
   margin: 0;
@@ -415,16 +509,17 @@ onScopeDispose(() => {
   align-items: center;
   gap: var(--sal-space-3);
   padding: var(--sal-space-2) var(--sal-space-3);
-  border: 1px solid var(--sal-border-subtle);
-  border-radius: var(--sal-radius-md);
-  background-color: var(--sal-surface-base);
+  border: var(--sal-border-width-thin) solid var(--sal-border-hud);
+  border-radius: var(--sal-radius-sm);
+  background-color: var(--sal-surface-panel);
+  box-shadow: var(--sal-shadow-bevel);
   min-width: 0;
 }
 
 .game-master__roster-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sal-space-1);
   min-width: 0;
 }
 
@@ -438,6 +533,7 @@ onScopeDispose(() => {
 }
 
 .game-master__roster-character {
+  font-family: var(--sal-font-mono);
   font-size: var(--sal-font-size-xs);
   color: var(--sal-text-secondary);
 }
