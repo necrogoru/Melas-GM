@@ -12,22 +12,9 @@ const gameStore = useGameStore()
 const isNarrating = ref(false)
 const activeCue = ref<AudioCueId | null>(null)
 
-const resolution = computed(() => gameStore.lastResolution)
+const isRevealOpen = computed(() => gameStore.phase === 'reveal')
 
-const isRevealOpen = computed(
-  () => gameStore.phase === 'reveal' && resolution.value !== null
-)
-
-const killedPlayer = computed(() => {
-  const killedId = resolution.value?.killedPlayerId
-  if (!killedId) return null
-  return gameStore.players.find((player) => player.id === killedId) ?? null
-})
-
-const modalTitle = computed(() => {
-  const night = resolution.value?.nightNumber ?? gameStore.nightNumber
-  return `Amanecer · Noche ${String(night)}`
-})
+const modalTitle = computed(() => `Amanecer · Noche ${String(gameStore.nightNumber)}`)
 
 async function playRevealCue(cueId: AudioCueId): Promise<void> {
   activeCue.value = cueId
@@ -62,11 +49,8 @@ function handleContinue(): void {
 watch(
   () => gameStore.phase,
   (phase, previousPhase) => {
-    if (phase === 'reveal' && resolution.value) {
-      const cue: AudioCueId = resolution.value.killedPlayerId
-        ? 'reveal-killed'
-        : 'reveal-saved'
-      void playRevealCue(cue)
+    if (phase === 'reveal') {
+      void playRevealCue('reveal-night')
       return
     }
 
@@ -87,9 +71,7 @@ onScopeDispose(() => {
     :open="isRevealOpen"
     :closable="false"
     :title="modalTitle">
-    <div
-      v-if="resolution"
-      class="reveal-modal">
+    <div class="reveal-modal">
       <div class="reveal-modal__audio-bar">
         <SalBadge
           :tone="isNarrating ? 'accent' : 'neutral'"
@@ -108,40 +90,30 @@ onScopeDispose(() => {
       <SalCard
         variant="elevated"
         padding="md">
-        <div
-          v-if="killedPlayer"
-          class="reveal-modal__outcome">
+        <div class="reveal-modal__outcome">
           <SalBadge
-            tone="danger"
+            tone="accent"
             size="md">
-            Víctima de la noche
+            Resolución de la noche
           </SalBadge>
 
           <p class="reveal-modal__headline">
-            {{ killedPlayer.name }} fue eliminado durante la noche.
+            Revelen la carta de Muerte en la mesa
           </p>
 
-          <p class="reveal-modal__detail">
-            Las campanas doblan por Salem. Su rol permanece oculto hasta que el pueblo revise sus cartas.
-          </p>
-        </div>
+          <ul class="reveal-modal__rules">
+            <li>
+              Si la víctima tiene el martillo del Alguacil, confesó esta noche o está en el Asilo, se salva.
+            </li>
 
-        <div
-          v-else
-          class="reveal-modal__outcome">
-          <SalBadge
-            tone="success"
-            size="md">
-            ¡Nadie murió esta noche!
-          </SalBadge>
+            <li>
+              Si muere, revela sus cartas de Juicio y pronuncia sus tres últimas palabras.
+            </li>
 
-          <p class="reveal-modal__headline">
-            El martillo del Alguacil protegió al pueblo.
-          </p>
-
-          <p class="reveal-modal__detail">
-            Todos los aldeanos despiertan con vida para iniciar un nuevo día en Salem.
-          </p>
+            <li>
+              Barajen el descarte junto con la carta de Noche al final del mazo antes de continuar.
+            </li>
+          </ul>
         </div>
       </SalCard>
     </div>
@@ -187,8 +159,12 @@ onScopeDispose(() => {
   color: var(--sal-text-primary);
 }
 
-.reveal-modal__detail {
+.reveal-modal__rules {
   margin: 0;
+  padding-left: var(--sal-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--sal-space-2);
   font-size: var(--sal-font-size-sm);
   color: var(--sal-text-secondary);
   line-height: 1.45;

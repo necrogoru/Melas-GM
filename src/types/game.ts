@@ -27,27 +27,13 @@ export type GamePhase =
   | 'day'
   | 'night-witches'
   | 'night-constable'
-  | 'night-ready-reveal'
+  | 'night-confession'
   | 'reveal'
-  | 'ended'
-
-export type DawnStep = 'witches' | 'constable'
-
-export type GameWinner = 'town' | 'witches'
 
 export interface Player {
   id: string
   name: string
   characterId: CharacterId
-  alive: boolean
-}
-
-export interface NightResolution {
-  nightNumber: number
-  targetId: string | null
-  protectedId: string | null
-  killedPlayerId: string | null
-  savedByConstable: boolean
 }
 
 export interface ActionResult {

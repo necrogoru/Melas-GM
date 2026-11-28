@@ -1,11 +1,9 @@
 export type AudioCueId =
   | 'dawn-witches'
-  | 'dawn-constable'
   | 'night-witches'
   | 'night-constable'
-  | 'night-ready-reveal'
-  | 'reveal-killed'
-  | 'reveal-saved'
+  | 'night-confession'
+  | 'reveal-night'
 
 export type AmbientTrackId = 'day' | 'night'
 
@@ -37,12 +35,7 @@ export const AUDIO_CUES: Record<AudioCueId, AudioCueDefinition> = {
   'dawn-witches': {
     src: '/audio/dawn-witches.mp3',
     fallbackText:
-      'El alba cae sobre Salem. Todos cierren los ojos. Brujas, abran los ojos, reconózcanse en silencio y entreguen el Gato Negro.'
-  },
-  'dawn-constable': {
-    src: '/audio/dawn-constable.mp3',
-    fallbackText:
-      'Las brujas cierran los ojos. Alguacil, abre los ojos y márcate en secreto antes de que despierte el pueblo.'
+      'El alba cae sobre Salem. Todos cierren los ojos. Brujas, abran los ojos, reconózcanse en silencio y coloquen el Gato Negro sobre la mesa.'
   },
   'night-witches': {
     src: '/audio/night-witches.mp3',
@@ -52,22 +45,17 @@ export const AUDIO_CUES: Record<AudioCueId, AudioCueDefinition> = {
   'night-constable': {
     src: '/audio/night-constable.mp3',
     fallbackText:
-      'Las brujas vuelven a dormir. Alguacil, despierta y coloca el martillo sobre el aldeano que deseas proteger.'
+      'Las brujas vuelven a dormir. Alguacil, si sigues en juego, despierta y coloca el martillo sobre otro jugador.'
   },
-  'night-ready-reveal': {
-    src: '/audio/night-ready-reveal.mp3',
+  'night-confession': {
+    src: '/audio/night-confession.mp3',
     fallbackText:
-      'El Alguacil cierra los ojos. Pueblo de Salem, despierten todos. Es momento de revelar lo ocurrido esta noche.'
+      'El Alguacil cierra los ojos. Pueblo de Salem, despierten todos. Antes de revelar la víctima, pueden confesar volteando una carta de Juicio para salvarse esta noche.'
   },
-  'reveal-killed': {
-    src: '/audio/reveal-killed.mp3',
+  'reveal-night': {
+    src: '/audio/reveal-night.mp3',
     fallbackText:
-      'Las campanas doblan por Salem. La oscuridad cobró una vida durante la noche.'
-  },
-  'reveal-saved': {
-    src: '/audio/reveal-saved.mp3',
-    fallbackText:
-      'El alba trae alivio a Salem. El martillo del Alguacil protegió al pueblo y nadie murió esta noche.'
+      'Es momento de revelar lo ocurrido esta noche. Comprueben si la víctima fue salvada por el martillo, una confesión o el asilo; si muere, pronuncia sus tres últimas palabras.'
   }
 }
 

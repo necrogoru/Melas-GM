@@ -32,10 +32,10 @@ const OFFICIAL_RULES_URL =
         </h3>
 
         <p class="rules-guide__text">
-          Todos cierran los ojos. Las Brujas se reconocen en secreto y asignan el
+          El <strong>Alguacil</strong>
+          es una carta de Juicio boca abajo repartida al inicio (no despierta en El Alba). Todos cierran los ojos; las Brujas despiertan en silencio, se reconocen y colocan el
           <strong>Gato Negro</strong>
-          (quien lo recibe empieza la partida). Después, el
-          <strong>Alguacil</strong> se marca en secreto.
+          sobre la mesa para marcar quién inicia la partida.
         </p>
 
         <table
@@ -97,18 +97,23 @@ const OFFICIAL_RULES_URL =
         </h3>
 
         <ul class="rules-guide__list">
-          <li><strong>Brujas:</strong> abren los ojos y eligen a quién atacar.</li>
+          <li><strong>Brujas:</strong> abren los ojos y colocan la carta de Muerte sobre su víctima.</li>
 
           <li>
             <strong>Alguacil:</strong>
 
-            coloca el <strong>martillo</strong> para proteger a alguien (nunca a sí mismo).
+            si su carta de Juicio sigue oculta en juego, coloca el <strong>martillo</strong> para proteger a otro jugador (nunca a sí mismo).
+          </li>
+
+          <li>
+            <strong>Confesión:</strong>
+
+            todos despiertan; antes de revelar, quien quiera puede <em>Confesar</em> volteando 1 carta de Juicio para salvarse esta noche.
           </li>
 
           <li>
             <strong>Revelar:</strong>
-
-            antes de revelar, un jugador puede <em>Confesar</em> una carta de Juicio para salvarse.
+            se revela la carta de Muerte (se salva con martillo, Confesión o Asilo); si muere, pronuncia 3 últimas palabras y se baraja el descarte con la carta de Noche al final del mazo.
           </li>
         </ul>
       </section>

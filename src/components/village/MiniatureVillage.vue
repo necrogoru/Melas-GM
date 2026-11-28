@@ -6,7 +6,6 @@ import type { GamePhase, Player } from '@/types/game'
 export interface MiniatureVillageProps {
   players: Player[]
   phase: GamePhase
-  blackCatHolderId?: string | null
 }
 
 type SkyMood = 'twilight' | 'dawn' | 'day' | 'night'
@@ -18,16 +17,13 @@ const PHASE_SKY_MAP: Record<GamePhase, SkyMood> = {
   day: 'day',
   'night-witches': 'night',
   'night-constable': 'night',
-  'night-ready-reveal': 'night',
-  reveal: 'day',
-  ended: 'twilight'
+  'night-confession': 'night',
+  reveal: 'day'
 }
 
 const COMPACT_THRESHOLD = 6
 
-const props = withDefaults(defineProps<MiniatureVillageProps>(), {
-  blackCatHolderId: null
-})
+const props = defineProps<MiniatureVillageProps>()
 
 const skyMood = computed<SkyMood>(() => PHASE_SKY_MAP[props.phase])
 const isLitScene = computed(() => skyMood.value === 'night' || skyMood.value === 'twilight')
@@ -365,8 +361,6 @@ function spriteDelay(index: number): string {
           <VillagerSprite
             :character-id="player.characterId"
             :player-name="player.name"
-            :alive="player.alive"
-            :has-black-cat="player.id === blackCatHolderId"
             :size="spriteSize"
             :animation-delay="spriteDelay(index)" />
         </li>

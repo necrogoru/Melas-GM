@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   AMBIENT_BASE_VOLUME,
   AMBIENT_DUCKED_VOLUME,
+  AUDIO_CUES,
   SFX_VOLUME,
   getAmbientVolume,
   isMuted,
@@ -14,7 +15,8 @@ import {
   stopAmbient,
   stopNarration,
   toggleMute,
-  unlockAudio
+  unlockAudio,
+  type AudioCueId
 } from '@/services/audioService'
 import {
   isWakeLockActive,
@@ -145,16 +147,38 @@ describe('audioService', () => {
     expect(nightAudio?.paused).toBe(true)
   })
 
-  it('ducks ambient audio while playing an MP3 cue and restores volume when ended', async () => {
+  it('defines the 5 official Town Crier cues with MP3 sources and Spanish fallback text', () => {
+    const expectedCueIds: AudioCueId[] = [
+      'dawn-witches',
+      'night-witches',
+      'night-constable',
+      'night-confession',
+      'reveal-night'
+    ]
+
+    expect(new Set(Object.keys(AUDIO_CUES))).toEqual(new Set(expectedCueIds))
+    for (const cueId of expectedCueIds) {
+      expect(AUDIO_CUES[cueId].src).toBe(`/audio/${cueId}.mp3`)
+      expect(AUDIO_CUES[cueId].fallbackText.trim().length).toBeGreaterThan(0)
+    }
+  })
+
+  it.each<AudioCueId>([
+    'dawn-witches',
+    'night-witches',
+    'night-constable',
+    'night-confession',
+    'reveal-night'
+  ])('ducks ambient audio while playing %s and restores volume when ended', async (cueId) => {
     playAmbient('night')
     const ambientAudio = MockAudio.instances[0]
     expect(ambientAudio?.volume).toBe(AMBIENT_BASE_VOLUME)
 
-    const cuePromise = playCue('night-witches')
+    const cuePromise = playCue(cueId)
     expect(MockAudio.instances).toHaveLength(2)
 
     const cueAudio = MockAudio.instances[1]
-    expect(cueAudio?.src).toBe('/audio/night-witches.mp3')
+    expect(cueAudio?.src).toBe(`/audio/${cueId}.mp3`)
     expect(getAmbientVolume()).toBe(AMBIENT_DUCKED_VOLUME)
     expect(ambientAudio?.volume).toBe(AMBIENT_DUCKED_VOLUME)
 
@@ -201,7 +225,7 @@ describe('audioService', () => {
       value: undefined
     })
 
-    await expect(playCue('dawn-constable')).resolves.toBeUndefined()
+    await expect(playCue('night-confession')).resolves.toBeUndefined()
   })
 
   it('mutes ambient audio and skips narration when muted', async () => {
